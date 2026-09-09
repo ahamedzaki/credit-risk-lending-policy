@@ -1,0 +1,27 @@
+# data — the big raw CSV and the built DB are never committed
+data/*.csv
+data/*.csv.gz
+data/*.duckdb
+data/*.duckdb.wal
+
+# build outputs
+exports/*.parquet
+reports/figures/*.png
+reports/powerbi_dashboard.pdf
+
+# EXCEPTIONS: small artefacts the hosted Streamlit app needs are committed on purpose.
+!exports/simulator_base_sample.parquet
+!artifacts/model.joblib
+!artifacts/metrics.json
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# power bi
+*.pbix
+
+# os
+.DS_Store

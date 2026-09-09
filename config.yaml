@@ -1,0 +1,42 @@
+# All assumptions and paths live here. Nothing hard-coded in the pipeline.
+
+data:
+  # Lending Club "accepted" loans. Kaggle: wordsforthewise/lending-club
+  raw_csv: data/accepted_2007_to_2018Q4.csv
+  kaggle_mirror: "wordsforthewise/lending-club"
+  snapshot_label: "2018Q4"          # data goes through 2018-Q4; used only for documentation
+
+maturity:
+  term_months: 36                    # 36-month loans only in v1 (see spec §2.1)
+  terminal_fraction_threshold: 0.98  # an issue month is "mature" if >= this share reached a terminal status
+  min_months_since_issue: 39         # hard fallback cutoff if the pre-flight is inconclusive
+  issue_year_min: 2012               # ignore the thin, pre-standardised early years
+  issue_year_max: 2016               # pre-flight + terminal-fraction check will trim further
+
+split:
+  oot_cutoff: "2015-01-01"           # train: issue_d < cutoff ; test: issue_d >= cutoff (within mature window)
+
+model:
+  target_positive_statuses: ["Charged Off", "Default", "Late (120+ days)"]
+  target_negative_statuses: ["Fully Paid"]
+  logistic_C: 1.0
+  calibration_method: "isotonic"     # "isotonic" | "sigmoid" | "none"
+  random_state: 42
+  auc_repro_tolerance: 0.005
+
+expected_loss:
+  lgd: 0.45                          # fixed constant assumption (spec §5.4)
+  ead_mode: "funded"                 # "funded" = loan_amnt (decision-time) | "outstanding" = out_prncp (portfolio only)
+
+simulator:
+  cost_of_funds: 0.04               # r_f, annual
+  horizon_years: 3.0                # T — all money terms put on this horizon
+  default_pd_cutoff: 0.15
+  default_min_fico: 660
+
+paths:
+  duckdb: data/credit.duckdb
+  model: artifacts/model.joblib
+  metrics: artifacts/metrics.json
+  exports_dir: exports
+  figures_dir: reports/figures
