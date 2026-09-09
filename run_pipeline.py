@@ -14,6 +14,15 @@ from __future__ import annotations
 import json
 import pathlib
 import sys
+import warnings
+
+import numpy as np
+
+# Some OpenBLAS builds emit spurious FP RuntimeWarnings from `matmul` inside the LBFGS
+# solver. They do not affect results; keep the CLI output clean.
+np.seterr(all="ignore")
+for _m in ("invalid value encountered", "divide by zero encountered", "overflow encountered"):
+    warnings.filterwarnings("ignore", message=_m, category=RuntimeWarning)
 
 from src.config import load, sql_params
 from src.db import connect, run_sql_file, show

@@ -58,8 +58,14 @@ def engineer(df: pd.DataFrame) -> pd.DataFrame:
         out["annual_inc"] = out["annual_inc"].clip(lower=0)
         out["log_annual_inc"] = np.log1p(out["annual_inc"].fillna(0.0))
     if {"loan_amnt", "annual_inc"}.issubset(out.columns):
-        inc = out["annual_inc"].replace(0, np.nan)
-        out["loan_to_income"] = out["loan_amnt"] / inc
+        inc = out["annual_inc"].where(out["annual_inc"] > 0)
+        out["loan_to_income"] = (out["loan_amnt"] / inc).clip(upper=5.0)
+
+    # scrub non-finite values from every numeric column so downstream scaling / the
+    # linear solver never see inf (median imputation then fills the resulting NaNs).
+    num = NUMERIC + DERIVED_NUMERIC
+    present = [c for c in num if c in out.columns]
+    out[present] = out[present].replace([np.inf, -np.inf], np.nan)
     return out
 
 

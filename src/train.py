@@ -7,7 +7,9 @@ Returns: test AUC (float) — used by the pipeline's reproducibility assertion.
 """
 from __future__ import annotations
 
+import contextlib
 import pathlib
+import warnings
 
 import joblib
 import numpy as np
@@ -22,6 +24,15 @@ from src.config import load
 from src.db import connect
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+@contextlib.contextmanager
+def _quiet_blas():
+    """Some OpenBLAS builds emit spurious divide/overflow RuntimeWarnings from `matmul`
+    inside the LBFGS solver. They do not affect the fitted coefficients — silence them."""
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"), warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=".*matmul.*", category=RuntimeWarning)
+        yield
 
 
 def _load_frame(con) -> pd.DataFrame:
@@ -47,11 +58,12 @@ def _fit_pd_model(X: pd.DataFrame, y: np.ndarray, cfg: dict) -> Pipeline:
         ]
     )
     method = cfg["model"]["calibration_method"]
-    if method == "none":
-        base.fit(X, y)
-        return base
-    calibrated = CalibratedClassifierCV(base, method=method, cv=3)
-    calibrated.fit(X, y)
+    with _quiet_blas():
+        if method == "none":
+            base.fit(X, y)
+            return base
+        calibrated = CalibratedClassifierCV(base, method=method, cv=3)
+        calibrated.fit(X, y)
     return calibrated
 
 
@@ -104,8 +116,9 @@ def main() -> float:
     Xte, yte = test[feat_cols], test["default_flag"].to_numpy()
 
     model = _fit_pd_model(Xtr, ytr, cfg)
-    p_tr = model.predict_proba(Xtr)[:, 1]
-    p_te = model.predict_proba(Xte)[:, 1]
+    with _quiet_blas():
+        p_tr = model.predict_proba(Xtr)[:, 1]
+        p_te = model.predict_proba(Xte)[:, 1]
 
     fig_dir = cfg["paths"]["figures_dir"]
     evaluate.plot_calibration(yte, p_te, f"{fig_dir}/calibration_test.png",
