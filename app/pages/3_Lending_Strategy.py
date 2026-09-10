@@ -4,13 +4,13 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dash_data import CONFIG, data_source_note, money, page_header, simulator_base
+from dash_data import CONFIG, artifact, data_source_note, money, page_header, simulator_base
 from sim_core import approved_metrics, best_policy, profit_curve
 
 st.set_page_config(page_title="Lending Strategy", layout="wide")
 
 SIM = CONFIG["simulator"]
-LGD = CONFIG["expected_loss"]
+_lgd = (artifact("lgd.json") or {}).get("lgd_data", CONFIG["expected_loss"].get("lgd_fixed", 0.45))
 
 df, src = simulator_base()
 
@@ -18,7 +18,7 @@ page_header("Lending Strategy",
             "Move the levers — see approval, volume, expected loss and risk-adjusted profit")
 data_source_note(src)
 st.caption(
-    f"Assumptions — LGD {LGD.get('lgd', 0.5)} (data-estimated), cost of funds "
+    f"Assumptions — LGD {_lgd:.2f} (data-estimated), cost of funds "
     f"{SIM['cost_of_funds']:.0%}/yr, servicing {SIM['servicing_cost']:.1%}/yr, "
     f"amortisation factor {SIM['amort_factor']}, T = {SIM['horizon_years']:g} yr. "
     "Interest is haircut by (1 − PD). Directional, not P&L-grade — see Backtest & Validation."

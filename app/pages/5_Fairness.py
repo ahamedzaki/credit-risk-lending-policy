@@ -20,6 +20,11 @@ st.warning(fair["note"])
 st.metric("Overall approval rate (recommended policy)", f"{fair['overall_approval_rate']:.1%}",
           f"PD < {fair['policy']['pd_cutoff']}, FICO ≥ {fair['policy']['min_fico']}")
 
+_ORDER = {
+    "by_income_band": ["<40k", "40-70k", "70-120k", "120k+"],
+    "by_region": ["Northeast", "Midwest", "South", "West"],
+    "by_home_ownership": ["RENT", "OWN", "MORTGAGE"],
+}
 for key, label in [("by_income_band", "Income band"), ("by_region", "US region"),
                    ("by_home_ownership", "Home ownership")]:
     d = fair[key]
@@ -28,13 +33,19 @@ for key, label in [("by_income_band", "Income band"), ("by_region", "US region")
     st.subheader(f"{label} — adverse-impact ratio {d['adverse_impact_ratio']}  ·  {verdict}")
     rows = []
     for g in d["approval_rate"]:
+        n = d.get("group_n", {}).get(g)
+        if n is not None and n < 500:            # tiny groups (e.g. home_ownership 'ANY', n=1) are noise
+            continue
         rows.append({
             "group": g,
-            "n": d.get("group_n", {}).get(g),
+            "n": n,
             "approval rate": d["approval_rate"][g],
             "approved-book default rate": d["approved_book_default_rate"].get(g),
         })
     t = pd.DataFrame(rows)
+    order = [g for g in _ORDER.get(key, []) if g in set(t["group"])]
+    if order:
+        t = t.set_index("group").loc[order].reset_index()
     st.dataframe(
         t.style.format({"n": "{:,.0f}", "approval rate": "{:.1%}",
                         "approved-book default rate": "{:.1%}"}),

@@ -56,9 +56,9 @@ with right:
     st.subheader("Risk-band distribution")
     band = pd.cut(df["pd_hat"], [0, 0.05, 0.10, 0.20, 1.0],
                   labels=["Low <5%", "Moderate 5-10%", "Elevated 10-20%", "High 20%+"])
-    bd = df.groupby(band, observed=True).agg(loans=("loan_id", "size"),
-                                             exposure=("loan_amnt", "sum"),
-                                             exp_loss=("expected_loss", "sum"))
+    bd = (df.groupby(band.rename("risk band"), observed=True)
+            .agg(loans=("loan_id", "size"), exposure=("loan_amnt", "sum"),
+                 exp_loss=("expected_loss", "sum")))
     st.dataframe(
         bd.style.format({"loans": "{:,}", "exposure": lambda v: money(v),
                          "exp_loss": lambda v: money(v)}),
