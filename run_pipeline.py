@@ -86,7 +86,7 @@ def stage_export(cfg, params, con):
         print(f"   wrote {out / fname}")
     # small committed sample for the hosted Streamlit app
     con.execute(
-        f"COPY (SELECT * FROM mart_simulator_base USING SAMPLE 50000 ROWS) "
+        f"COPY (SELECT * FROM mart_simulator_base USING SAMPLE 50000 ROWS (reservoir, 42)) "
         f"TO '{out / 'simulator_base_sample.parquet'}' (FORMAT PARQUET)"
     )
     print(f"   wrote {out / 'simulator_base_sample.parquet'}")

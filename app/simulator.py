@@ -23,6 +23,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 _CFG = yaml.safe_load((ROOT / "config.yaml").read_text())
 SIM = _CFG["simulator"]
 LGD = _CFG["expected_loss"]["lgd"]
+AMORT_FACTOR = SIM["amort_factor"]
+SERVICING_COST = SIM["servicing_cost"]
 
 st.set_page_config(page_title="Lending Policy Simulator", layout="wide")
 
@@ -43,7 +45,8 @@ st.title("Lending Policy Simulator")
 st.caption(
     f"Source: `{src}` · {len(df):,} loans · assumptions — LGD {LGD}, "
     f"cost of funds {SIM['cost_of_funds']:.0%}, horizon T = {SIM['horizon_years']:g} yrs, "
-    f"simple interest, no prepayment / servicing cost."
+    f"amortisation factor {AMORT_FACTOR}, servicing {SERVICING_COST:.1%}/yr. "
+    f"No cash-flow discounting or prepayment."
 )
 
 with st.sidebar:
@@ -54,10 +57,11 @@ with st.sidebar:
     st.subheader("Assumptions (config.yaml)")
     cof = st.number_input("Cost of funds (annual)", 0.0, 0.20, float(SIM["cost_of_funds"]), 0.005)
     horizon = st.number_input("Horizon T (years)", 1.0, 5.0, float(SIM["horizon_years"]), 0.5)
-    st.caption("Expected profit (A) = interest income − funding cost − expected loss, "
-               "all over T years on the approved set A.")
+    st.caption("Expected profit (A) = interest income − funding cost − servicing − expected loss, "
+               "over T years on the approved set A. Interest and funding accrue on "
+               "b · principal (b = amortisation factor); interest is also × (1 − PD).")
 
-m = approved_metrics(df, pd_cut, fico_min, cof, horizon)
+m = approved_metrics(df, pd_cut, fico_min, cof, horizon, AMORT_FACTOR, SERVICING_COST)
 
 c = st.columns(5)
 c[0].metric("Approval rate", f"{m['approval_rate']:.1%}")
@@ -71,7 +75,8 @@ left, right = st.columns([3, 2])
 
 with left:
     st.subheader("Profit vs approval rate")
-    curve = profit_curve(df, fico_min, cof, horizon)
+    curve = profit_curve(df, fico_min, cof, horizon, amort_factor=AMORT_FACTOR,
+                         servicing_cost=SERVICING_COST)
     st.line_chart(curve.set_index("approval_rate")[["exp_profit", "exp_loss"]])
     bp = best_policy(curve)
     st.info(f"Profit-maximising cut-off at this FICO floor: **PD < {bp['pd_cut']:.3f}** "

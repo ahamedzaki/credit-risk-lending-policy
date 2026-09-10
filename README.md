@@ -98,11 +98,13 @@ Two levers (PD cut-off, min FICO). Shows approval rate, volume, default rate, ex
 loss, expected profit, and the profit-vs-approval curve. Assumptions (LGD, cost of funds,
 horizon) are shown in the sidebar and live in `config.yaml`.
 
-Profit model (single-period, spec §5.6): `interest income = Σ loan_amnt · int_rate · T ·
-(1 − PD)`, `funding cost = Σ loan_amnt · r_f · T`, `expected loss = Σ PD · EAD · LGD`,
-`profit = interest − funding − loss`. The `(1 − PD)` haircut on interest is what lets the
-profit curve turn over. Still an approximation — no cash-flow timing, prepayment or
-servicing cost.
+Profit model (spec §5.6, in `app/sim_core.py`): with amortisation factor `b` (~0.52) and
+survival `(1 − PD)` —
+`interest = Σ loan_amnt·int_rate·T·b·(1−PD)`, `funding = Σ loan_amnt·r_f·T·b`,
+`servicing = Σ loan_amnt·s·T`, `loss = Σ PD·EAD·LGD`,
+`profit = interest − funding − servicing − loss`. The `(1 − PD)` haircut **and** `b`
+together give the profit-vs-approval curve a real interior optimum (≈ PD < 0.17 on the
+current data). Still an approximation — no cash-flow discounting, no prepayment.
 
 ### Power BI (Windows contributor)
 

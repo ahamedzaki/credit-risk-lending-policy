@@ -42,6 +42,8 @@ expected_loss:
 simulator:
   cost_of_funds: 0.04               # r_f, annual
   horizon_years: 3.0                # T — all money terms put on this horizon
+  amort_factor: 0.52               # avg outstanding balance / original principal (36-mo level-pay)
+  servicing_cost: 0.012            # annual, fraction of original principal
   default_pd_cutoff: 0.15
   default_min_fico: 660
 

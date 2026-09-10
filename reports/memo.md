@@ -32,15 +32,21 @@ PD × EAD × LGD with EAD = funded amount and LGD = 0.45 (assumption).
   one notch below the middle of the book.
 
 ## Policy recommendation
+Min FICO 660, LGD 0.45, cost of funds 4%, T = 3 yr, amort factor 0.52, servicing 1.2%/yr.
+
 | Policy | Approve if PD < | Approval rate | Volume | Exp. default rate | Exp. loss | Exp. profit (T=3) |
 |---|---|---|---|---|---|---|
-| Conservative | [0.08] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Current-equivalent | [0.15] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Growth | [0.20] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| **Profit-maximising** | **[best]** | [ ] | [ ] | [ ] | [ ] | **[ ]** |
+| Conservative | 0.08 | 24.9% | $2.4B | 5.5% | $57.9M | $12.6M |
+| Current-equivalent | 0.15 | 63.3% | $5.4B | 9.1% | $214.3M | $49.5M |
+| **Profit-maximising** | **0.17** | **72.1%** | **$6.1B** | **10.0%** | **$262.1M** | **$51.6M** |
+| Growth | 0.20 | 83.0% | $6.9B | 11.1% | $328.9M | $47.5M |
 
-**Recommendation:** [e.g. move the cut-off from 0.15 to 0.[xx]; this trades $[x]M more
-expected loss for $[x]M more expected profit at +[x] pts approval].
+**Recommendation:** loosen the PD cut-off from **0.15 → ~0.17** (+~9 pts approval,
++$0.7B volume). Expected profit rises ~$2M while expected loss rises ~$48M — the extra
+margin on the newly-approved band still clears its expected loss. Do **not** go to 0.20:
+approval keeps climbing but expected profit *falls* (~‑$4M vs the 0.17 optimum) because
+the marginal loans past ~0.17 lose money. The profit-vs-approval curve peaks and turns
+over — see `reports/figures/` / the simulator.
 
 ## Assumptions & limitations
 - **Label maturity** — 36-month loans, issue date ≤ [cutoff]; loans still *Current* after
@@ -56,10 +62,11 @@ expected loss for $[x]M more expected profit at +[x] pts approval].
   not a precise low-grade probability.
 - **LGD** fixed at 0.45 → Expected Loss is a rescaling of PD; segment analysis still valid.
 - **EAD** = funded amount, no amortisation → overstates exposure for seasoned loans.
-- **Profit model** — single-period expected value over T = 3 years: interest income is
-  `loan_amnt · int_rate · T · (1 − PD)` (defaulters stop paying), funding cost 4% · T,
-  expected loss `PD · EAD · LGD`. No cash-flow timing, prepayment or servicing cost.
-  Directional, not P&L-grade.
+- **Profit model** — expected value over T = 3 yr: interest and funding accrue on
+  `b · principal` (b = 0.52 amortisation factor), interest also × `(1 − PD)`; plus a flat
+  1.2%/yr servicing charge; loss = `PD · EAD · LGD`. This is enough to give the curve a
+  real interior optimum, but it has no cash-flow discounting, no prepayment, and a single
+  blended amortisation factor. Directional, not P&L-grade.
 - **Circularity** — `grade` / `sub_grade` / `int_rate` excluded from features; `int_rate`
   used only in the profit calculation.
 - **Fairness** — `addr_state` excluded from the model by default; a disparate-impact check

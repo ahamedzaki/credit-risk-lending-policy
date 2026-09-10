@@ -1,21 +1,29 @@
 """Pure simulator math — no Streamlit, so it can be unit-tested and reused.
 
-Policy = (PD cut-off, minimum FICO). Single-period expected-value model on horizon T
-(spec §5.6):
+Policy = (PD cut-off, minimum FICO). Expected-value P&L on horizon T (spec §5.6):
 
-    interest income (A) = Σ  loan_amnt · int_rate · T · (1 − PD)   # defaulters stop paying
-    funding cost   (A)  = Σ  loan_amnt · r_f · T
-    expected loss  (A)  = Σ  PD · EAD · LGD                        # the EL already in the mart
-    expected profit(A)  = interest income − funding cost − expected loss
+    interest income (A) = Σ  loan_amnt · int_rate · T · b · (1 − PD)
+    funding cost   (A)  = Σ  loan_amnt · r_f     · T · b
+    servicing cost (A)  = Σ  loan_amnt · s       · T
+    expected loss  (A)  = Σ  PD · EAD · LGD                      (the EL already in the mart)
+    expected profit(A)  = interest − funding − servicing − expected loss
 
-The (1 − PD) haircut on interest is what lets the profit-vs-approval curve turn over
-instead of rising forever. It is still an approximation: no cash-flow timing, no
-prepayment, no servicing cost, no recovery lag.
+Two corrections keep the profit-vs-approval curve from rising forever (the naive-simulator
+failure mode):
+  * (1 − PD) haircut on interest — defaulters stop paying coupons.
+  * amortisation factor b (~0.52) — a level-payment 36-month loan carries, on average,
+    only ~half its original principal, so interest earned and funding cost both accrue on
+    b · principal, not the full principal × T.
+Still an approximation: no cash-flow discounting, no prepayment, no recovery lag, flat
+per-loan servicing.
 """
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+
+AMORT_FACTOR = 0.52       # avg outstanding balance / original principal, 36-month level-pay
+SERVICING_COST = 0.012    # annual, fraction of original principal
 
 
 def approved_metrics(
@@ -24,23 +32,29 @@ def approved_metrics(
     fico_min: float,
     cost_of_funds: float,
     horizon: float,
+    amort_factor: float = AMORT_FACTOR,
+    servicing_cost: float = SERVICING_COST,
 ) -> dict:
     a = df[(df["pd_hat"] < pd_cut) & (df["fico_mid"] >= fico_min)]
     n_all = len(df)
     if len(a) == 0 or n_all == 0:
         return dict(approval_rate=0.0, volume=0.0, exp_default_rate=0.0, exp_loss=0.0,
-                    interest_income=0.0, funding_cost=0.0, exp_profit=0.0, n=0)
-    interest_income = float((a["loan_amnt"] * a["int_rate"] * horizon * (1.0 - a["pd_hat"])).sum())
-    funding_cost = float((a["loan_amnt"] * cost_of_funds * horizon).sum())
+                    interest_income=0.0, funding_cost=0.0, servicing_cost=0.0,
+                    exp_profit=0.0, n=0)
+    principal = a["loan_amnt"]
+    interest_income = float((principal * a["int_rate"] * horizon * amort_factor * (1.0 - a["pd_hat"])).sum())
+    funding_cost = float((principal * cost_of_funds * horizon * amort_factor).sum())
+    servicing = float((principal * servicing_cost * horizon).sum())
     exp_loss = float(a["expected_loss"].sum())
     return dict(
         approval_rate=len(a) / n_all,
-        volume=float(a["loan_amnt"].sum()),
+        volume=float(principal.sum()),
         exp_default_rate=float(a["pd_hat"].mean()),
         exp_loss=exp_loss,
         interest_income=interest_income,
         funding_cost=funding_cost,
-        exp_profit=interest_income - funding_cost - exp_loss,
+        servicing_cost=servicing,
+        exp_profit=interest_income - funding_cost - servicing - exp_loss,
         n=int(len(a)),
     )
 
@@ -51,10 +65,15 @@ def profit_curve(
     cost_of_funds: float,
     horizon: float,
     n_points: int = 60,
+    amort_factor: float = AMORT_FACTOR,
+    servicing_cost: float = SERVICING_COST,
 ) -> pd.DataFrame:
     cuts = np.linspace(0.01, 0.40, n_points)
-    recs = [approved_metrics(df, t, fico_min, cost_of_funds, horizon) | {"pd_cut": float(t)}
-            for t in cuts]
+    recs = [
+        approved_metrics(df, t, fico_min, cost_of_funds, horizon, amort_factor, servicing_cost)
+        | {"pd_cut": float(t)}
+        for t in cuts
+    ]
     return pd.DataFrame(recs)
 
 
