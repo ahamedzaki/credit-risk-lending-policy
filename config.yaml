@@ -23,9 +23,11 @@ model:
   target_positive_statuses: ["Charged Off", "Default", "Late (120+ days)"]
   target_negative_statuses: ["Fully Paid"]
   # Primary PD model. "hgb" = HistGradientBoosting (sklearn, no libomp needed).
-  # Finding: on origination-time features a linear model tops out at AUC ~0.658 and
-  # LOSES to grade-alone (0.669); HGB reaches ~0.671 and edges past it. Both are always
-  # reported in metrics.json alongside the grade baseline (spec §2.4).
+  # Finding (with the expanded ~33-field bureau allowlist): logistic AUC ~0.680,
+  # HGB ~0.691, grade-alone 0.669 — BOTH models now beat grade, HGB by +0.022.
+  # (With the minimal 17-field allowlist logistic lost to grade; adding bona-fide
+  #  origination-time bureau attributes closed and reversed the gap.)
+  # All three AUCs are always written to metrics.json (spec §2.4).
   type: "hgb"                         # "hgb" | "logistic"
   logistic_C: 1.0
   hgb_max_iter: 400

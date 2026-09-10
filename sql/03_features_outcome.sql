@@ -31,7 +31,29 @@ SELECT
     delinq_2yrs,
     inq_last_6mths,
     pub_rec,
-    mort_acc
+    mort_acc,
+
+    -- expanded bureau attributes (spec §4; see 02_staging.sql)
+    acc_open_past_24mths,
+    bc_util,
+    bc_open_to_buy,
+    mo_sin_old_rev_tl_op,
+    mths_since_recent_inq,
+    mths_since_recent_bc,
+    num_actv_bc_tl,
+    num_tl_op_past_12m,
+    num_accts_ever_120_pd,
+    num_tl_90g_dpd_24m,
+    pct_tl_nvr_dlq,
+    percent_bc_gt_75,
+    tot_hi_cred_lim,
+    total_bal_ex_mort,
+    total_bc_limit,
+    tot_cur_bal,
+    avg_cur_bal,
+    tot_coll_amt,
+    pub_rec_bankruptcies,
+    application_type
 FROM stg_loans;
 
 DROP TABLE IF EXISTS mart_loan_benchmark;

@@ -39,6 +39,29 @@ WITH typed AS (
         TRY_CAST(pub_rec AS DOUBLE)                                         AS pub_rec,
         TRY_CAST(mort_acc AS DOUBLE)                                        AS mort_acc,
 
+        -- ---- expanded bureau attributes (credit-bureau pull at application; <4% null
+        --      in the 2012-01..2016-02 window; all origination-time, no leakage) ----
+        TRY_CAST(acc_open_past_24mths AS DOUBLE)                            AS acc_open_past_24mths,
+        TRY_CAST(replace(trim(bc_util), '%', '') AS DOUBLE)               AS bc_util,
+        TRY_CAST(bc_open_to_buy AS DOUBLE)                                  AS bc_open_to_buy,
+        TRY_CAST(mo_sin_old_rev_tl_op AS DOUBLE)                            AS mo_sin_old_rev_tl_op,
+        TRY_CAST(mths_since_recent_inq AS DOUBLE)                           AS mths_since_recent_inq,
+        TRY_CAST(mths_since_recent_bc AS DOUBLE)                            AS mths_since_recent_bc,
+        TRY_CAST(num_actv_bc_tl AS DOUBLE)                                  AS num_actv_bc_tl,
+        TRY_CAST(num_tl_op_past_12m AS DOUBLE)                              AS num_tl_op_past_12m,
+        TRY_CAST(num_accts_ever_120_pd AS DOUBLE)                           AS num_accts_ever_120_pd,
+        TRY_CAST(num_tl_90g_dpd_24m AS DOUBLE)                              AS num_tl_90g_dpd_24m,
+        TRY_CAST(replace(trim(pct_tl_nvr_dlq), '%', '') AS DOUBLE)        AS pct_tl_nvr_dlq,
+        TRY_CAST(replace(trim(percent_bc_gt_75), '%', '') AS DOUBLE)      AS percent_bc_gt_75,
+        TRY_CAST(tot_hi_cred_lim AS DOUBLE)                                 AS tot_hi_cred_lim,
+        TRY_CAST(total_bal_ex_mort AS DOUBLE)                               AS total_bal_ex_mort,
+        TRY_CAST(total_bc_limit AS DOUBLE)                                  AS total_bc_limit,
+        TRY_CAST(tot_cur_bal AS DOUBLE)                                     AS tot_cur_bal,
+        TRY_CAST(avg_cur_bal AS DOUBLE)                                     AS avg_cur_bal,
+        TRY_CAST(tot_coll_amt AS DOUBLE)                                    AS tot_coll_amt,
+        TRY_CAST(pub_rec_bankruptcies AS DOUBLE)                            AS pub_rec_bankruptcies,
+        nullif(trim(application_type), '')                                 AS application_type,
+
         -- ---- benchmark-only (NOT features): Lending Club's own risk model ----
         trim(grade)                                                        AS lc_grade,
         trim(sub_grade)                                                    AS lc_sub_grade,

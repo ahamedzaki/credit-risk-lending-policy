@@ -72,6 +72,33 @@ No recession in the window (spec §6 limitation). El-per-exposure is flat across
   `educational` has 1 row.
 - `verification_status`: Source Verified / Not Verified / Verified — 3 clean levels.
 
+## Expanded bureau feature block (added after the minimal-allowlist baseline)
+The first pass used 17 core application fields; a linear model on those *lost* to LC's
+grade (AUC 0.658 vs 0.669). Added the credit-bureau attributes below — all reported at
+the bureau pull, i.e. knowable at underwriting, so no leakage. Null fractions measured on
+the modelling window (36-month, 2012-01 … 2016-02):
+
+| Feature | null_frac | Feature | null_frac |
+|---|---|---|---|
+| `acc_open_past_24mths` | 0.009 | `num_accts_ever_120_pd` | 0.035 |
+| `total_bc_limit` | 0.009 | `num_tl_90g_dpd_24m` | 0.035 |
+| `total_bal_ex_mort` | 0.009 | `pct_tl_nvr_dlq` | 0.035 |
+| `pub_rec_bankruptcies` | 0.000 | `percent_bc_gt_75` | 0.020 |
+| `application_type` | 0.000 | `tot_hi_cred_lim` | 0.035 |
+| `bc_util` | 0.020 | `tot_cur_bal` | 0.035 |
+| `bc_open_to_buy` | 0.019 | `avg_cur_bal` | 0.035 |
+| `mths_since_recent_bc` | 0.018 | `tot_coll_amt` | 0.035 |
+| `num_actv_bc_tl` | 0.035 | `mo_sin_old_rev_tl_op` | 0.035 |
+| `num_tl_op_past_12m` | 0.035 | `mths_since_recent_inq` | 0.116 |
+
+**Excluded despite being origination-time:** the `open_il_*` / `open_rv_*` / `il_util` /
+`all_util` / `inq_last_12m` family (only collected from 2015-12, ~99% null in the window)
+and `mths_since_last_delinq` (50% null — "never" and "long ago" are not separable under
+median imputation without a companion flag).
+
+**Result:** with the expanded ~33-field allowlist, logistic AUC 0.680, HGB 0.691,
+grade-alone 0.669 — both models now beat grade (HGB by +0.022). See `artifacts/metrics.json`.
+
 ## Columns excluded from features
 - **Post-origination (leakage):** `last_pymnt_d`, `last_pymnt_amnt`, `total_pymnt`,
   `total_rec_prncp`, `total_rec_int`, `recoveries`, `collection_recovery_fee`, `out_prncp`,

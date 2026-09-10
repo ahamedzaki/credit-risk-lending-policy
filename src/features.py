@@ -15,6 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 NUMERIC: list[str] = [
+    # --- core application fields ---
     "loan_amnt",
     "annual_inc",
     "dti",
@@ -29,12 +30,34 @@ NUMERIC: list[str] = [
     "inq_last_6mths",
     "pub_rec",
     "mort_acc",
+    # --- expanded bureau attributes (credit-bureau pull at application; spec §4).
+    #     All knowable at underwriting, all <4% null in the modelling window. ---
+    "acc_open_past_24mths",     # recent credit-seeking
+    "bc_util",                  # bankcard utilisation (distinct from revol_util)
+    "bc_open_to_buy",           # unused bankcard credit
+    "mo_sin_old_rev_tl_op",     # age of oldest revolving trade (file thickness)
+    "mths_since_recent_inq",    # inquiry recency
+    "mths_since_recent_bc",     # months since most recent bankcard opened
+    "num_actv_bc_tl",           # active bankcard trades
+    "num_tl_op_past_12m",       # trades opened in last 12m
+    "num_accts_ever_120_pd",    # accounts ever 120+ DPD (history of serious delinquency)
+    "num_tl_90g_dpd_24m",       # trades 90+ DPD in last 24m
+    "pct_tl_nvr_dlq",           # % of trades never delinquent
+    "percent_bc_gt_75",         # % of bankcards over 75% utilised (distress)
+    "tot_hi_cred_lim",          # total high credit limit (capacity)
+    "total_bal_ex_mort",        # total non-mortgage balance (leverage)
+    "total_bc_limit",           # total bankcard limit
+    "tot_cur_bal",              # total current balance across all accounts
+    "avg_cur_bal",              # average balance per account
+    "tot_coll_amt",             # total amount currently in collections
+    "pub_rec_bankruptcies",     # public-record bankruptcies
 ]
 
 CATEGORICAL: list[str] = [
     "home_ownership",
     "purpose",
     "verification_status",
+    "application_type",         # Individual vs Joint App
     # addr_state is intentionally omitted by default (fairness, spec §6).
     # Add it here only if you also add the disparate-impact check.
 ]

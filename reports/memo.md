@@ -10,25 +10,30 @@ loss versus earn in risk-adjusted profit?
 ## Data & method (one paragraph)
 Lending Club accepted loans (`wordsforthewise` mirror, 2.26M rows), 36-month term,
 mature vintages only (**issued 2012-01 … 2016-02**; ~641k terminal loans, default rate
-14.9%). Origination-time features only; `grade` / `sub_grade` / `int_rate` excluded from
-the model. Out-of-time split: train issued before **2015-01**, test on/after
-(306k / 334k). Primary PD model: calibrated **HistGradientBoosting**; Expected Loss =
-PD × EAD × LGD with EAD = funded amount and LGD = 0.45 (assumption).
+14.9%). **~33 origination-time features** — core application fields plus credit-bureau
+attributes available at underwriting (utilisation, trade-line counts and ages, recent
+inquiries, prior serious delinquencies, total limits and balances). `grade` / `sub_grade`
+/ `int_rate` excluded from the model. Out-of-time split: train issued before **2015-01**,
+test on/after (306k / 334k). Primary PD model: calibrated **HistGradientBoosting**;
+Expected Loss = PD × EAD × LGD with EAD = funded amount and LGD = 0.45 (assumption).
 
 ## Results
-- **Model (HGB):** test AUC **0.670**, KS **0.247**, Brier **0.121**, mean PD 0.133 vs
-  base rate 0.132 (well calibrated in the large). Calibration curve:
-  `reports/figures/calibration_test.png`.
-- **Benchmark:** grade-alone AUC **0.669**; a linear model on the same features tops out
-  at **0.658**. So HGB **edges past grade (+0.001 AUC)**; logistic **loses to it**. The
-  honest read: application-time features carry only slightly more separable signal than
-  LC's grade already encodes.
-- **Segment calibration:** PD is under-predicted in the low grades (grade G: predicted
-  24.5% vs observed 41.0%; grade F: 21.9% vs 33.8%) — the model compresses the risk tail.
-  Isotonic calibration is global and cannot fix a segment-specific bias. Small books
-  (E–G together are 3.9% of loans) so portfolio impact is limited; flagged in Limitations.
-- **Concentration:** grade A is **25.6%** of exposure but only **14.2%** of expected loss;
-  grades **C + D are 36.5% of exposure but 47.4% of expected loss** — risk is concentrated
+- **Model (HGB):** test AUC **0.691**, Gini **0.382**, KS **0.278**, Brier **0.119**,
+  mean PD 0.135 vs base rate 0.132 (well calibrated in the large — deciles track observed
+  rates within ~1–2 pp). Calibration curve: `reports/figures/calibration_test.png`.
+- **Benchmark (spec §2.4):** grade-alone AUC **0.669**; logistic on the same features
+  **0.680**; HGB **0.691**. **Both models now beat grade** — HGB by **+0.022 AUC**. With
+  a minimal 17-field allowlist the linear model *lost* to grade (0.658); adding bona-fide
+  origination-time bureau attributes closed and reversed the gap. Headline: with public
+  application + bureau fields only, the model out-ranks Lending Club's own grade.
+- **Segment calibration:** PD is still under-predicted in the low grades (grade G:
+  predicted 30.5% vs observed 46.0%; grade F: 27.4% vs 42.3%; grade D: 20.7% vs 26.6%) —
+  the model compresses the risk tail, and the expanded features did not fix it. Global
+  isotonic calibration cannot correct a segment-specific bias; a production system would
+  calibrate within risk bands. E–G together are ~4% of loans, so portfolio impact is
+  limited; flagged in Limitations.
+- **Concentration:** grade A is **25.6%** of exposure but only **12.9%** of expected loss;
+  grades **C + D are 36.5% of exposure but 49.4% of expected loss** — risk is concentrated
   one notch below the middle of the book.
 
 ## Policy recommendation
@@ -36,17 +41,17 @@ Min FICO 660, LGD 0.45, cost of funds 4%, T = 3 yr, amort factor 0.52, servicing
 
 | Policy | Approve if PD < | Approval rate | Volume | Exp. default rate | Exp. loss | Exp. profit (T=3) |
 |---|---|---|---|---|---|---|
-| Conservative | 0.08 | 24.9% | $2.4B | 5.5% | $57.9M | $12.6M |
-| Current-equivalent | 0.15 | 63.3% | $5.4B | 9.1% | $214.3M | $49.5M |
-| **Profit-maximising** | **0.17** | **72.1%** | **$6.1B** | **10.0%** | **$262.1M** | **$51.6M** |
-| Growth | 0.20 | 83.0% | $6.9B | 11.1% | $328.9M | $47.5M |
+| Conservative | 0.08 | 27.0% | $2.5B | 5.2% | $58.2M | $17.8M |
+| Current-equivalent | 0.15 | 64.0% | $5.4B | 8.8% | $207.4M | $54.0M |
+| **Profit-maximising** | **0.173** | **72.9%** | **$6.1B** | **9.7%** | **$255.5M** | **$56.8M** |
+| Growth | 0.20 | 80.8% | $6.7B | 10.6% | $304.7M | $54.0M |
 
 **Recommendation:** loosen the PD cut-off from **0.15 → ~0.17** (+~9 pts approval,
-+$0.7B volume). Expected profit rises ~$2M while expected loss rises ~$48M — the extra
++$0.7B volume). Expected profit rises ~$3M while expected loss rises ~$48M — the extra
 margin on the newly-approved band still clears its expected loss. Do **not** go to 0.20:
-approval keeps climbing but expected profit *falls* (~‑$4M vs the 0.17 optimum) because
-the marginal loans past ~0.17 lose money. The profit-vs-approval curve peaks and turns
-over — see `reports/figures/` / the simulator.
+approval keeps climbing but expected profit *falls back* (~‑$3M vs the 0.173 optimum)
+because the marginal loans past ~0.17 lose money. The profit-vs-approval curve peaks and
+turns over — see `reports/figures/` / the simulator.
 
 ## Assumptions & limitations
 - **Label maturity** — 36-month loans, issue date ≤ [cutoff]; loans still *Current* after
@@ -56,10 +61,10 @@ over — see `reports/figures/` / the simulator.
   extrapolates. Not fixable with this data.
 - **Macro regime** — the issue window contains no recession; out-of-regime calibration is
   fragile. This is why multi-scenario stress testing is deferred, not faked.
-- **Model** — HGB beats grade by only ~0.001 AUC; a linear model loses to grade. The
-  low grades (E–G) are under-predicted (risk-tail compression) and global isotonic
-  calibration does not fix it. Treat PD as a ranking tool within the bulk of the book,
-  not a precise low-grade probability.
+- **Model** — HGB beats grade by +0.022 AUC (logistic by +0.011) on ~33 origination-time
+  fields. The low grades (D–G) are under-predicted (risk-tail compression) and global
+  isotonic calibration does not fix it. Treat PD as a ranking tool and a well-calibrated
+  probability in the bulk of the book, but not a precise low-grade probability.
 - **LGD** fixed at 0.45 → Expected Loss is a rescaling of PD; segment analysis still valid.
 - **EAD** = funded amount, no amortisation → overstates exposure for seasoned loans.
 - **Profit model** — expected value over T = 3 yr: interest and funding accrue on
