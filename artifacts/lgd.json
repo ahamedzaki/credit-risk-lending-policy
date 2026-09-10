@@ -1,0 +1,7 @@
+{
+  "lgd_data": 0.4995,
+  "lgd_loan_mean": 0.503,
+  "recovery_rate": 0.5005,
+  "n_charged_off_train": 40596,
+  "method": "1 - sum(total_rec_prncp + recoveries) / sum(funded_amnt), charged-off train loans"
+}

@@ -8,14 +8,17 @@ data/*.duckdb.wal
 exports/*.parquet
 reports/figures/*.png
 reports/powerbi_dashboard.pdf
-artifacts/
+artifacts/*
+!artifacts/.gitkeep
 
-# EXCEPTIONS: small artefacts the hosted Streamlit app needs are committed on purpose.
-# Re-enable model.joblib / metrics.json once they are trained on the REAL dataset —
-# a synthetic-trained model must not be committed.
+# EXCEPTIONS: small artefacts the hosted dashboard needs are committed on purpose
+# (all derived from the public Lending Club data; no secrets, no full dataset).
 !exports/simulator_base_sample.parquet
-# !artifacts/model.joblib
-# !artifacts/metrics.json
+!artifacts/metrics.json
+!artifacts/lgd.json
+!artifacts/backtest.json
+!artifacts/fairness.json
+# model.joblib stays ignored — the hosted dashboard reads the sample parquet, not the model.
 
 # demo/synthetic data generator output (keep the script, not its output)
 data/synthetic_accepted.csv

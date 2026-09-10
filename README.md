@@ -95,16 +95,24 @@ Stages (each runnable on its own, e.g. `python run_pipeline.py train`):
 | `fairness` | `src/fairness.py` → disparate-impact (4/5ths) check of the recommended policy → `artifacts/fairness.json` |
 | `check`    | retrain and assert test AUC reproduces within `config.model.auc_repro_tolerance` |
 
-### Simulator
+### Dashboard & simulator
 
 ```bash
-streamlit run app/simulator.py
+streamlit run app/dashboard.py      # 5-page BI dashboard
+streamlit run app/simulator.py      # simulator only (subset of the dashboard)
 ```
 
-Reads `exports/simulator_base.parquet` (falls back to the committed `*_sample.parquet`).
-Two levers (PD cut-off, min FICO). Shows approval rate, volume, default rate, expected
-loss, expected profit, and the profit-vs-approval curve. Assumptions (LGD, cost of funds,
-horizon) are shown in the sidebar and live in `config.yaml`.
+The **dashboard** (`app/dashboard.py` + `app/pages/`) has five pages: Executive Overview
+(portfolio KPIs, EL by vintage, risk bands, grade concentration), Credit Risk (PD
+distribution, calibration, the grade benchmark + DeLong test, segment tables), Lending
+Strategy (the interactive policy simulator), Backtest & Validation (model-PD vs
+realized-outcome profit curves, decision calibration), and Fairness (4/5ths-rule
+disparate-impact check). It reads `exports/*.parquet` and `artifacts/*.json`, falling
+back to the committed sample + artefact JSONs when the full marts are absent.
+
+The **simulator** page: two levers (PD cut-off, min FICO). Shows approval rate, volume,
+default rate, expected loss, expected profit, and the profit-vs-approval curve.
+Assumptions (LGD, cost of funds, servicing, horizon) live in `config.yaml`.
 
 Profit model (spec §5.6, in `app/sim_core.py`): with amortisation factor `b` (~0.52) and
 survival `(1 − PD)` —

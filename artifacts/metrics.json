@@ -1,0 +1,134 @@
+{
+  "dataset": {
+    "snapshot": "2018Q4",
+    "oot_cutoff": "2015-01-01",
+    "n_train": 306462,
+    "n_test": 333721,
+    "train_default_rate": 0.13246666797188558,
+    "test_default_rate": 0.14878895844133272
+  },
+  "primary_model": "hgb",
+  "model_train": {
+    "auc": 0.7152120453881965,
+    "gini": 0.430424090776393,
+    "ks": 0.31140292995162855,
+    "brier": 0.10668875762245958,
+    "base_rate": 0.13246666797188558,
+    "n": 306462
+  },
+  "model_test": {
+    "auc": 0.6904041941289849,
+    "gini": 0.3808083882579698,
+    "ks": 0.2751453744713127,
+    "brier": 0.11936401688520763,
+    "base_rate": 0.14878895844133272,
+    "n": 333721
+  },
+  "comparison_test_auc": {
+    "hgb": 0.6904041941289849,
+    "logistic": 0.6803204226608783,
+    "grade_only": 0.6688077056602302
+  },
+  "benchmark_grade_test": {
+    "auc": 0.6688077056602302,
+    "rate_by_grade": {
+      "A": 0.05476458198058375,
+      "B": 0.10662157029427191,
+      "C": 0.16646108066177498,
+      "D": 0.21399895269680572,
+      "E": 0.255769924269744,
+      "F": 0.2846525455221107,
+      "G": 0.3348623853211009
+    }
+  },
+  "delta_auc_vs_grade": 0.021596488468754726,
+  "delong_primary_vs_grade": {
+    "auc_a": 0.690404194128985,
+    "auc_b": 0.6688077056602302,
+    "auc_diff": 0.021596488468754838,
+    "z": 19.352274789894196,
+    "p_value": 1.9504089398717424e-83,
+    "significant_at_0.05": true
+  },
+  "lightgbm_test": {
+    "available": false,
+    "note": "lightgbm not usable: dlopen(/Users/zaki/Desktop/credit-risk-lending-policy/.venv/lib/python3.9/site-packages/lightgbm/lib/lib_lightgbm.dylib, 0x0006): Library not loaded: @rpath/libomp.dylib\n  Referenced from: <D44045CD-B874-3A27-9A61-F131D99AACE4> /Users/zaki/Desktop/credit-risk-lending-policy/.venv/lib/python3.9/site-packages/lightgbm/lib/lib_lightgbm.dylib\n  Reason: tried: '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/local/lib/libomp/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/local/lib/libomp/libomp.dylib' (no such file), '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/local/lib/libomp/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/local/lib/libomp/libomp.dylib' (no such file)"
+  },
+  "decile_table_test": [
+    {
+      "bucket": 0,
+      "n": 33373,
+      "mean_pd": 0.031226601890339108,
+      "obs_rate": 0.03140263086926558,
+      "lift": 0.2110548470681552
+    },
+    {
+      "bucket": 1,
+      "n": 33372,
+      "mean_pd": 0.05597460896557503,
+      "obs_rate": 0.05957089775860002,
+      "lift": 0.40037176402500824
+    },
+    {
+      "bucket": 2,
+      "n": 33372,
+      "mean_pd": 0.07514970851232058,
+      "obs_rate": 0.08177514083662951,
+      "lift": 0.5496049014206477
+    },
+    {
+      "bucket": 3,
+      "n": 33372,
+      "mean_pd": 0.09301037097795253,
+      "obs_rate": 0.10260098285988253,
+      "lift": 0.6895739034314026
+    },
+    {
+      "bucket": 4,
+      "n": 33372,
+      "mean_pd": 0.11268786064468282,
+      "obs_rate": 0.1242358863718087,
+      "lift": 0.8349805501245896
+    },
+    {
+      "bucket": 5,
+      "n": 33372,
+      "mean_pd": 0.13261940863725571,
+      "obs_rate": 0.14620040752726837,
+      "lift": 0.9826025335402492
+    },
+    {
+      "bucket": 6,
+      "n": 33371,
+      "mean_pd": 0.15480707703847393,
+      "obs_rate": 0.17107668334781698,
+      "lift": 1.1497942128230723
+    },
+    {
+      "bucket": 7,
+      "n": 33373,
+      "mean_pd": 0.18334466139631178,
+      "obs_rate": 0.20270877655589847,
+      "lift": 1.3623912599389978
+    },
+    {
+      "bucket": 8,
+      "n": 33372,
+      "mean_pd": 0.2237392485434916,
+      "obs_rate": 0.2452954572695673,
+      "lift": 1.6486133100144456
+    },
+    {
+      "bucket": 9,
+      "n": 33372,
+      "mean_pd": 0.2985005838427602,
+      "obs_rate": 0.3230252906628311,
+      "lift": 2.171029988022932
+    }
+  ],
+  "config": {
+    "type": "hgb",
+    "calibration_method": "isotonic",
+    "logistic_C": 1.0
+  }
+}

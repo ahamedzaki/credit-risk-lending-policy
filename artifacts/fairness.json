@@ -1,0 +1,74 @@
+{
+  "policy": {
+    "pd_cutoff": 0.15,
+    "min_fico": 660
+  },
+  "note": "No protected-class attributes in Lending Club data \u2014 this is a disparate-impact proxy check, not a fair-lending test. A production model owes ECOA/Reg B adverse-action reason codes (per-decision SHAP); not built here.",
+  "overall_approval_rate": 0.6282,
+  "by_income_band": {
+    "group_n": {
+      "<40k": 69083,
+      "40-70k": 128838,
+      "70-120k": 99411,
+      "120k+": 37125
+    },
+    "approval_rate": {
+      "<40k": 0.3581,
+      "40-70k": 0.595,
+      "70-120k": 0.7719,
+      "120k+": 0.8612
+    },
+    "adverse_impact_ratio": 0.416,
+    "passes_4_5ths_rule": false,
+    "approved_book_default_rate": {
+      "<40k": 0.1105,
+      "40-70k": 0.0974,
+      "70-120k": 0.0911,
+      "120k+": 0.0836
+    }
+  },
+  "by_region": {
+    "group_n": {
+      "Midwest": 59610,
+      "Northeast": 67335,
+      "South": 119352,
+      "West": 88160
+    },
+    "approval_rate": {
+      "Midwest": 0.6195,
+      "Northeast": 0.647,
+      "South": 0.6196,
+      "West": 0.6313
+    },
+    "adverse_impact_ratio": 0.958,
+    "passes_4_5ths_rule": true,
+    "approved_book_default_rate": {
+      "Midwest": 0.0886,
+      "Northeast": 0.0994,
+      "South": 0.0976,
+      "West": 0.0906
+    }
+  },
+  "by_home_ownership": {
+    "group_n": {
+      "ANY": 1,
+      "MORTGAGE": 154381,
+      "OWN": 38248,
+      "RENT": 141827
+    },
+    "approval_rate": {
+      "ANY": 1.0,
+      "MORTGAGE": 0.7464,
+      "OWN": 0.5887,
+      "RENT": 0.5102
+    },
+    "adverse_impact_ratio": 0.684,
+    "passes_4_5ths_rule": false,
+    "approved_book_default_rate": {
+      "ANY": 0.0,
+      "MORTGAGE": 0.086,
+      "OWN": 0.1033,
+      "RENT": 0.1054
+    }
+  }
+}

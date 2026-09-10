@@ -1,13 +1,21 @@
-# Deploy the Lending Policy Simulator (Streamlit Community Cloud)
+# Deploy to Streamlit Community Cloud
 
-The app is self-contained: it reads only `exports/simulator_base_sample.parquet`
-(a committed ~1 MB, 50k-row sample) and `config.yaml`. No database, no model file.
+Two apps can be deployed from this repo — deploy either or both:
+
+| App | Entry point | What it is |
+|---|---|---|
+| **Dashboard** (recommended) | `app/dashboard.py` | 5-page BI dashboard: Executive Overview · Credit Risk · Lending Strategy · Backtest & Validation · Fairness |
+| Simulator only | `app/simulator.py` | just the policy simulator (a subset of the dashboard's Lending Strategy page) |
+
+Both are self-contained: they read `exports/simulator_base_sample.parquet` (committed
+~1 MB, 50k-row sample), `config.yaml`, and the committed `artifacts/*.json` (metrics,
+lgd, backtest, fairness). No database, no model file.
 
 ## Prerequisites
 - Repo pushed to GitHub (see below).
 - `requirements.txt` at repo root = the slim app deps (already set).
-- `exports/simulator_base_sample.parquet` committed (it is; `.gitignore` has an exception).
-- Entry point: `app/simulator.py`.
+- `exports/simulator_base_sample.parquet` and `artifacts/{metrics,lgd,backtest,fairness}.json`
+  committed (they are; `.gitignore` has exceptions).
 
 ## One-time: push to GitHub
 
@@ -26,10 +34,12 @@ git push -u origin main
 ## Deploy
 
 1. Go to <https://share.streamlit.io> → sign in with GitHub.
-2. **New app** → pick the repo, branch `main`, **Main file path** `app/simulator.py`.
+2. **New app** → pick the repo, branch `main`, **Main file path** `app/dashboard.py`
+   (or `app/simulator.py` for the simulator-only app).
 3. **Advanced settings → Python version: 3.11**.
 4. **Deploy.** First build installs `requirements.txt` (~1–2 min).
 5. You get a URL like `https://<name>.streamlit.app` — put it in the README and your CV.
+6. To run both apps, repeat with the other entry point (each gets its own URL).
 
 Private repo? Streamlit will ask to install its GitHub app and grant read access to that
 repo — that is enough, no need to make it public.
