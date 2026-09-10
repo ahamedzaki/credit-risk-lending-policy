@@ -2,16 +2,19 @@
 
 data:
   # Lending Club "accepted" loans. Kaggle: wordsforthewise/lending-club
-  raw_csv: data/accepted_2007_to_2018Q4.csv
+  raw_csv: data/accepted_2007_to_2018Q4.csv.gz
   kaggle_mirror: "wordsforthewise/lending-club"
   snapshot_label: "2018Q4"          # data goes through 2018-Q4; used only for documentation
 
 maturity:
   term_months: 36                    # 36-month loans only in v1 (see spec §2.1)
   terminal_fraction_threshold: 0.98  # an issue month is "mature" if >= this share reached a terminal status
-  min_months_since_issue: 39         # hard fallback cutoff if the pre-flight is inconclusive
+  # Pre-flight (2260701 rows, wordsforthewise mirror): 36-month loans are >=98% resolved
+  # through 2016-02 (2016-03 drops to 0.87). Data max issue = 2018-12, so 34 months back
+  # lands exactly on 2016-02. Window: 2012-01 .. 2016-02, ~640k terminal loans, DR ~14%.
+  min_months_since_issue: 34
   issue_year_min: 2012               # ignore the thin, pre-standardised early years
-  issue_year_max: 2016               # pre-flight + terminal-fraction check will trim further
+  issue_year_max: 2016               # the month-diff rule trims the tail of 2016
 
 split:
   oot_cutoff: "2015-01-01"           # train: issue_d < cutoff ; test: issue_d >= cutoff (within mature window)
