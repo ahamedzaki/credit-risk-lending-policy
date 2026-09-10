@@ -38,14 +38,22 @@ model:
   auc_repro_tolerance: 0.005
 
 expected_loss:
-  lgd: 0.45                          # fixed constant assumption (spec §5.4)
+  # LGD: "data" estimates it from charged-off TRAIN-period recoveries
+  #   LGD = 1 - (sum(principal repaid + post-charge-off recoveries) / sum(funded_amnt))
+  # "fixed" uses lgd_fixed (kept for the sensitivity comparison in the memo).
+  lgd_mode: "data"                   # "data" | "fixed"
+  lgd_fixed: 0.45
+  lgd: 0.45                          # effective value; overwritten by the `lgd` stage when lgd_mode=data
   ead_mode: "funded"                 # "funded" = loan_amnt (decision-time) | "outstanding" = out_prncp (portfolio only)
 
 simulator:
   cost_of_funds: 0.04               # r_f, annual
   horizon_years: 3.0                # T — all money terms put on this horizon
   amort_factor: 0.52               # avg outstanding balance / original principal (36-mo level-pay)
-  servicing_cost: 0.012            # annual, fraction of original principal
+  # Annual servicing cost as a fraction of original principal. 0.4%/yr is a common figure
+  # for unsecured consumer instalment loans. (An earlier 1.2%/yr made even prime lending
+  # unprofitable in the realized-outcome backtest — see reports/memo.md, sensitivity.)
+  servicing_cost: 0.004
   default_pd_cutoff: 0.15
   default_min_fico: 660
 

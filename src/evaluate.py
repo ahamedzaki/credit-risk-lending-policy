@@ -30,6 +30,62 @@ def decile_table(y_true: np.ndarray, y_score: np.ndarray, k: int = 10) -> pd.Dat
     return g.reset_index()
 
 
+def _midrank(x: np.ndarray) -> np.ndarray:
+    order = np.argsort(x)
+    x_sorted = x[order]
+    n = len(x)
+    tr = np.zeros(n)
+    i = 0
+    while i < n:
+        j = i
+        while j < n and x_sorted[j] == x_sorted[i]:
+            j += 1
+        tr[i:j] = 0.5 * (i + j - 1) + 1
+        i = j
+    out = np.empty(n)
+    out[order] = tr
+    return out
+
+
+def delong_roc_test(y_true: np.ndarray, score_a: np.ndarray, score_b: np.ndarray) -> dict:
+    """Fast DeLong test for two correlated ROC AUCs on the same sample (Sun & Xu 2014).
+
+    Returns both AUCs, the AUC difference, the DeLong z-statistic and a two-sided p-value
+    for H0: AUC_a == AUC_b. Use it so "model beats grade" is a tested claim, not a point
+    estimate.
+    """
+    from scipy import stats
+
+    y = np.asarray(y_true).astype(int)
+    pos = np.c_[score_a, score_b][y == 1].T          # 2 x m
+    neg = np.c_[score_a, score_b][y == 0].T          # 2 x n
+    m, n = pos.shape[1], neg.shape[1]
+    k = 2
+
+    tx = np.array([_midrank(pos[r]) for r in range(k)])
+    ty = np.array([_midrank(neg[r]) for r in range(k)])
+    txy = np.array([_midrank(np.r_[pos[r], neg[r]]) for r in range(k)])
+
+    aucs = txy[:, :m].sum(axis=1) / (m * n) - (m + 1) / (2.0 * n)
+    v01 = (txy[:, :m] - tx) / n
+    v10 = 1.0 - (txy[:, m:] - ty) / m
+    s01 = np.cov(v01)
+    s10 = np.cov(v10)
+    cov = s01 / m + s10 / n
+    var_diff = cov[0, 0] + cov[1, 1] - 2 * cov[0, 1]
+    diff = aucs[0] - aucs[1]
+    z = float(diff / np.sqrt(var_diff)) if var_diff > 0 else 0.0
+    p = float(2 * stats.norm.sf(abs(z)))
+    return {
+        "auc_a": float(aucs[0]),
+        "auc_b": float(aucs[1]),
+        "auc_diff": float(diff),
+        "z": z,
+        "p_value": p,
+        "significant_at_0.05": p < 0.05,
+    }
+
+
 def summary(y_true: np.ndarray, y_score: np.ndarray) -> dict:
     return {
         "auc": float(roc_auc_score(y_true, y_score)),

@@ -94,10 +94,11 @@ def _grade_benchmark(bench_train: pd.DataFrame, bench_test: pd.DataFrame,
         .groupby("g")["y"].mean()
     )
     overall = float(np.mean(y_train))
-    pd_test = bench_test["lc_grade"].map(rate_by_grade).fillna(overall).values
+    pd_test = bench_test["lc_grade"].map(rate_by_grade).fillna(overall).to_numpy(dtype=float)
     return {
         "auc": float(roc_auc_score(y_test, pd_test)),
         "rate_by_grade": {k: float(v) for k, v in rate_by_grade.sort_index().items()},
+        "pd_test": pd_test,
     }
 
 
@@ -155,6 +156,8 @@ def main() -> float:
                               "PD deciles — out-of-time test")
 
     primary_auc = float(roc_auc_score(yte, p_te))
+    delong = evaluate.delong_roc_test(yte, p_te, grade_bm["pd_test"])
+    grade_bm = {k: v for k, v in grade_bm.items() if k != "pd_test"}  # don't serialise the vector
     metrics = {
         "dataset": {
             "snapshot": cfg["data"]["snapshot_label"],
@@ -172,6 +175,7 @@ def main() -> float:
         },
         "benchmark_grade_test": grade_bm,
         "delta_auc_vs_grade": primary_auc - grade_bm["auc"],
+        "delong_primary_vs_grade": delong,
         "lightgbm_test": lgbm,
         "decile_table_test": dec.to_dict(orient="records"),
         "config": {"type": primary_kind,
@@ -185,7 +189,8 @@ def main() -> float:
     print(f"   primary ({primary_kind}) AUC : {primary_auc:.4f}")
     print(f"   {secondary_kind:<14} AUC : {secondary_auc:.4f}")
     print(f"   grade-only     AUC : {grade_bm['auc']:.4f}")
-    print(f"   delta vs grade     : {metrics['delta_auc_vs_grade']:+.4f}")
+    print(f"   delta vs grade     : {metrics['delta_auc_vs_grade']:+.4f}  "
+          f"(DeLong z={delong['z']:.1f}, p={delong['p_value']:.2e})")
     if lgbm.get("available"):
         print(f"   lightgbm       AUC : {lgbm['auc']:.4f}")
     print(f"   test KS / Brier    : {metrics['model_test']['ks']:.4f} / {metrics['model_test']['brier']:.4f}")

@@ -155,15 +155,17 @@ parameters).
    `PD grid` table (0.02, 0.025, … 0.40) with Enter Data or a calculated table. X-axis =
    an "Approval Rate at grid" measure; Y = a "Profit at grid" measure that reuses the
    profit formula with `[PD grid value]` instead of the parameter. Mark the peak
-   (≈ PD < 0.17, 72% approval, ~$52M) with a constant line or annotation.
+   (≈ PD < 0.20, ~83% approval on the full book; ~PD 0.18 on the out-of-time test —
+   `artifacts/backtest.json`) with a constant line or annotation.
    *Simpler fallback:* a table with rows Conservative 0.08 / Current 0.15 /
-   Profit-max 0.17 / Growth 0.20 and the profit for each.
+   Profit-max ~0.18 / Growth 0.20 and the profit for each.
 2. **Waterfall — Approved Profit bridge:** `Approved Interest` → `- Approved Funding`
    → `- Approved Servicing` → `- Approved Expected Loss` → `Approved Profit`.
 3. **Matrix — approved book by `lc_grade`:** `Approved Loans`, `Approved Volume`,
    `Avg PD`, `Approved Expected Loss`.
-4. **Card + text:** the recommendation — "Move cut-off 0.15 → ~0.17: +9 pts approval,
-   +$0.7B volume, +~$2M profit. Do not go to 0.20 — profit falls."
+4. **Card + text:** the recommendation — "Move cut-off 0.15 → ~0.18: +~13 pts approval,
+   +$0.9B volume. Optimal cut-off confirmed on out-of-time data; realized profit ≈ half
+   the model projection. Do not go past ~0.20 — profit falls."
 
 ---
 
@@ -174,10 +176,19 @@ Also drop 2 PNG screenshots into `reports/figures/` if you want them in the READ
 
 ## 6. Sanity checks before exporting
 
-- KPI `Expected Loss` on Page 1 (no filters) ≈ **$474M**; `Funded` ≈ **$8.2B**;
+Numbers below are the **full scored book** (what `mart_simulator_base` / the Streamlit
+app show). LGD is now data-estimated at **0.50** (was 0.45) and servicing is **0.4%/yr**.
+
+- KPI `Expected Loss` on Page 1 (no filters) ≈ **$524M**; `Funded` ≈ **$8.2B**;
   `Observed DR` ≈ **14.1%**.
 - Page 2 at defaults (PD < 0.15, FICO ≥ 660): `Approval Rate` ≈ **64%**,
-  `Approved Volume` ≈ **$5.4B**, `Approved Expected Loss` ≈ **$207M**,
-  `Approved Profit` ≈ **$54M**; profit-max ≈ PD < 0.17 / 73% / **$57M**.
-  These must match `reports/memo.md` and the Streamlit app (re-check after any
-  pipeline change — `reports/memo.md` is the source of truth).
+  `Approved Volume` ≈ **$5.4B**, `Approved Expected Loss` ≈ **$228M**,
+  `Approved Profit` ≈ **$163M**; profit-max ≈ PD < 0.20 / 83%.
+- These are **model projections on the whole book**. The recommendation in
+  `reports/memo.md` is validated separately on the out-of-time test set
+  (`artifacts/backtest.json`): same optimal cut-off (~PD 0.18), but realized profit ≈
+  half the model figure and realized loss ≈ 1.12× model EL. If Page 2 shows a
+  model-vs-realized comparison, pull it from `artifacts/backtest.json`.
+- Disparate-impact flags for the recommendation card come from `artifacts/fairness.json`
+  (income-band AIR 0.42, home-ownership AIR 0.68 — both flag the 4/5ths rule).
+- `reports/memo.md` is the source of truth — re-check after any pipeline change.

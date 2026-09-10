@@ -28,7 +28,8 @@ from src.config import load, sql_params
 from src.db import connect, run_sql_file, show
 
 ROOT = pathlib.Path(__file__).resolve().parent
-STAGES = ["raw", "stage", "features", "train", "score", "marts", "export", "check"]
+STAGES = ["raw", "stage", "features", "lgd", "train", "score", "marts",
+          "export", "backtest", "fairness", "check"]
 
 
 def _banner(name: str) -> None:
@@ -54,6 +55,13 @@ def stage_features(cfg, params, con):
     show(run_sql_file(con, "03_features_outcome.sql", params))
 
 
+def stage_lgd(cfg, params, con):
+    """Estimate LGD from charged-off train recoveries (council rec #2); feed it to the marts."""
+    from src.lgd import main as lgd_main
+
+    params["lgd"] = str(lgd_main())
+
+
 def stage_train(cfg, params, con):
     from src.train import main as train_main
 
@@ -69,6 +77,10 @@ def stage_score(cfg, params, con):
 
 
 def stage_marts(cfg, params, con):
+    from src.lgd import resolve as resolve_lgd
+
+    params["lgd"] = str(resolve_lgd(cfg, con))   # data-estimate (cached) or fixed
+    print(f"   EL uses LGD = {params['lgd']}")
     show(run_sql_file(con, "06_marts.sql", params))
     # star-schema views (BI exhibit) — safe to rebuild every run
     show(run_sql_file(con, "../schema/star_schema.sql", params))
@@ -92,6 +104,18 @@ def stage_export(cfg, params, con):
     print(f"   wrote {out / 'simulator_base_sample.parquet'}")
 
 
+def stage_backtest(cfg, params, con):
+    from src.backtest import main as backtest_main
+
+    backtest_main()
+
+
+def stage_fairness(cfg, params, con):
+    from src.fairness import main as fairness_main
+
+    fairness_main()
+
+
 def stage_check(cfg, params, con):
     """Retrain and assert the test AUC reproduces — guards against a stale committed model."""
     from src.train import main as train_main
@@ -108,8 +132,9 @@ def stage_check(cfg, params, con):
 
 DISPATCH = {
     "raw": stage_raw, "stage": stage_stage, "features": stage_features,
-    "train": stage_train, "score": stage_score, "marts": stage_marts,
-    "export": stage_export, "check": stage_check,
+    "lgd": stage_lgd, "train": stage_train, "score": stage_score, "marts": stage_marts,
+    "export": stage_export, "backtest": stage_backtest, "fairness": stage_fairness,
+    "check": stage_check,
 }
 
 

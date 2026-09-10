@@ -99,6 +99,21 @@ median imputation without a companion flag).
 **Result:** with the expanded ~33-field allowlist, logistic AUC 0.680, HGB 0.691,
 grade-alone 0.669 — both models now beat grade (HGB by +0.022). See `artifacts/metrics.json`.
 
+## LGD estimated from recoveries (not assumed)
+`src/lgd.py`, on the **40,596 charged-off training-period loans**:
+`recovery_rate = Σ(total_rec_prncp + recoveries) / Σ(funded_amnt) = 0.500`
+→ **LGD = 0.50** (exposure-weighted; equal-weighted also 0.50). The textbook 0.45 was
+optimistic. `config.expected_loss.lgd_mode: data` makes the `lgd` stage compute this and
+feed it to `06_marts.sql`; set `fixed` to fall back to `lgd_fixed`. (`artifacts/lgd.json`)
+
+## Realized-outcome backtest (`src/backtest.py`)
+Re-runs the policy sweep on the 334k out-of-time **test** loans using actual cash
+(`total_pymnt + recoveries − funded_amnt`) and actual charge-offs, not predicted PD:
+- realized-profit optimum PD < 0.181 vs model optimum PD < 0.187 — **$0.1M regret** on a ~$6B book
+- predicted vs actual default rate track within ~1 pp at every cut-off
+- realized credit loss ≈ **1.12×** model EL; realized profit ≈ half the model projection
+  (the `(1−PD)·coupon` interest term is optimistic)
+
 ## Columns excluded from features
 - **Post-origination (leakage):** `last_pymnt_d`, `last_pymnt_amnt`, `total_pymnt`,
   `total_rec_prncp`, `total_rec_int`, `recoveries`, `collection_recovery_fee`, `out_prncp`,

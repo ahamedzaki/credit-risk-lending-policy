@@ -86,10 +86,13 @@ Stages (each runnable on its own, e.g. `python run_pipeline.py train`):
 | `raw`      | load CSV → `raw_loans` (all-varchar, no typing) |
 | `stage`    | `sql/02_staging.sql` → typed, de-duped, maturity-windowed `stg_loans` |
 | `features` | `sql/03_features_outcome.sql` → `mart_loan_features` (allowlist) + `mart_loan_outcomes` |
-| `train`    | `src/train.py` → `model.joblib`, `metrics.json`, calibration + lift figures, grade benchmark |
-| `score`    | `src/score.py` → `pd_hat` per loan, `mart_loan_el` (EL = PD·EAD·LGD) |
+| `lgd`      | `src/lgd.py` → estimate LGD from charged-off train recoveries → `artifacts/lgd.json` |
+| `train`    | `src/train.py` → `model.joblib`, `metrics.json` (incl. DeLong test vs grade), calibration + lift figures |
+| `score`    | `src/score.py` → `pd_hat` per loan, `mart_loan_el` (EL = PD·EAD·LGD, data-estimated LGD) |
 | `marts`    | `sql/06_marts.sql` → `mart_portfolio_summary`, `mart_simulator_base` |
 | `export`   | write `exports/*.parquet` |
+| `backtest` | `src/backtest.py` → re-run the policy sweep on realized out-of-time outcomes → `artifacts/backtest.json` + figure |
+| `fairness` | `src/fairness.py` → disparate-impact (4/5ths) check of the recommended policy → `artifacts/fairness.json` |
 | `check`    | retrain and assert test AUC reproduces within `config.model.auc_repro_tolerance` |
 
 ### Simulator

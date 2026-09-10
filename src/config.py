@@ -27,6 +27,8 @@ def sql_params(cfg: dict) -> dict[str, str]:
         "issue_year_max": str(cfg["maturity"]["issue_year_max"]),
         "min_months_since_issue": str(cfg["maturity"]["min_months_since_issue"]),
         "oot_cutoff": cfg["split"]["oot_cutoff"],
-        "lgd": str(cfg["expected_loss"]["lgd"]),
+        # placeholder default; the `lgd` / `marts` stages overwrite it with the effective
+        # value (data-estimate when expected_loss.lgd_mode == "data").
+        "lgd": str(cfg["expected_loss"].get("lgd_fixed", cfg["expected_loss"].get("lgd", 0.45))),
         "ead_mode": cfg["expected_loss"]["ead_mode"],
     }

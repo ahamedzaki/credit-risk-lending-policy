@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 AMORT_FACTOR = 0.52       # avg outstanding balance / original principal, 36-month level-pay
-SERVICING_COST = 0.012    # annual, fraction of original principal
+SERVICING_COST = 0.004    # annual, fraction of original principal (config.yaml is authoritative)
 
 
 def approved_metrics(

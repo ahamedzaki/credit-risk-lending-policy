@@ -76,8 +76,9 @@ SELECT
     funded_amnt,
     loan_amnt,
     out_prncp,
-    total_rec_prncp,
-    recoveries
+    total_pymnt,          -- total cash received (principal + interest + fees) — realized-P&L backtest
+    total_rec_prncp,      -- principal repaid — LGD estimation + realized loss
+    recoveries            -- post-charge-off recoveries — LGD estimation + realized loss
 FROM stg_loans;
 
 -- modelling frame = features + label, terminal loans only
