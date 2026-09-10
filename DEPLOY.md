@@ -49,6 +49,6 @@ Streamlit Cloud redeploys automatically on push.
 ## Sanity check after deploy
 The deployed app loads the 50k **sample**, so dollar totals are ~13× smaller than
 `reports/memo.md` (which is the full 640k book). The **rates** must match: at the default
-policy (PD < 0.15, FICO ≥ 660) approval ≈ 63%, expected default rate ≈ 9%, and the
+policy (PD < 0.15, FICO ≥ 660) approval ≈ 64%, expected default rate ≈ 9%, and the
 profit-vs-approval curve still peaks near PD < 0.17. The caption shows which file loaded
 (`simulator_base_sample.parquet` when deployed).

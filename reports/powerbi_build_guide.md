@@ -137,8 +137,8 @@ Layout: a KPI row across the top, then concentration below.
 5. **Column — `Funded` and `EL Rate` by `vintage_year`** — flat ≈ no vintage bias.
 6. **Slicers:** `lc_grade`, `purpose`, `split_set`.
 
-Headline callouts (text boxes): "Grade A = 25.6% of exposure but 14.2% of expected loss";
-"Grades C+D = 36.5% of exposure, 47.4% of expected loss".
+Headline callouts (text boxes): "Grade A = 25.6% of exposure but 12.9% of expected loss";
+"Grades C+D = 36.5% of exposure, 49.4% of expected loss".
 
 ---
 
@@ -174,8 +174,10 @@ Also drop 2 PNG screenshots into `reports/figures/` if you want them in the READ
 
 ## 6. Sanity checks before exporting
 
-- KPI `Expected Loss` on Page 1 (no filters) ≈ **$467M**; `Funded` ≈ **$8.2B**;
+- KPI `Expected Loss` on Page 1 (no filters) ≈ **$474M**; `Funded` ≈ **$8.2B**;
   `Observed DR` ≈ **14.1%**.
-- Page 2 at defaults (PD < 0.15, FICO ≥ 660): `Approval Rate` ≈ **63%**,
-  `Approved Volume` ≈ **$5.4B**, `Approved Expected Loss` ≈ **$214M**,
-  `Approved Profit` ≈ **$50M**. These must match `reports/memo.md` and the Streamlit app.
+- Page 2 at defaults (PD < 0.15, FICO ≥ 660): `Approval Rate` ≈ **64%**,
+  `Approved Volume` ≈ **$5.4B**, `Approved Expected Loss` ≈ **$207M**,
+  `Approved Profit` ≈ **$54M**; profit-max ≈ PD < 0.17 / 73% / **$57M**.
+  These must match `reports/memo.md` and the Streamlit app (re-check after any
+  pipeline change — `reports/memo.md` is the source of truth).

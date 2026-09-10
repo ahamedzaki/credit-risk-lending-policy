@@ -54,7 +54,7 @@ because the marginal loans past ~0.17 lose money. The profit-vs-approval curve p
 turns over — see `reports/figures/` / the simulator.
 
 ## Assumptions & limitations
-- **Label maturity** — 36-month loans, issue date ≤ [cutoff]; loans still *Current* after
+- **Label maturity** — 36-month loans, issue date ≤ 2016-02; loans still *Current* after
   the window are dropped. Removes right-censoring bias; tilts the sample to earlier vintages.
 - **Reject inference** — data is *accepted, funded* loans only. PD is calibrated to approved
   borrowers, not the through-the-door population; loosening the cut-off in the simulator
@@ -75,7 +75,7 @@ turns over — see `reports/figures/` / the simulator.
 - **Circularity** — `grade` / `sub_grade` / `int_rate` excluded from features; `int_rate`
   used only in the profit calculation.
 - **Fairness** — `addr_state` excluded from the model by default; a disparate-impact check
-  by state / income band is [done / not done].
+  by state / income band is not done (future work).
 - **Dataset** — Kaggle mirror `wordsforthewise/lending-club`, snapshot 2018Q4.
 
 ## Deferred (future work)
