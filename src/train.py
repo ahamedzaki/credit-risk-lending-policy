@@ -15,6 +15,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -42,31 +43,47 @@ def _load_frame(con) -> pd.DataFrame:
     return df
 
 
-def _fit_pd_model(X: pd.DataFrame, y: np.ndarray, cfg: dict) -> Pipeline:
-    # NO class_weight: this is a probability-of-default model and calibration is the
-    # point (spec §5.2). Class balancing inflates the raw scores and forces the
-    # calibrator to undo its own distortion. Default ~15-20% is not rare enough to need it.
-    base = Pipeline(
-        [
-            ("prep", features.build_preprocessor()),
-            (
-                "clf",
-                LogisticRegression(
-                    C=cfg["model"]["logistic_C"],
-                    max_iter=2000,
-                    random_state=cfg["model"]["random_state"],
-                ),
-            ),
-        ]
-    )
+def _estimator(kind: str, cfg: dict) -> Pipeline:
+    """Unfitted preprocessing + classifier pipeline for the requested model type.
+
+    No class_weight anywhere: this is a probability-of-default model and calibration is
+    the point (spec §5.2). A ~13-15% positive rate is not rare enough to need balancing,
+    and balancing forces the calibrator to undo its own distortion.
+    """
+    if kind == "logistic":
+        clf = LogisticRegression(
+            C=cfg["model"]["logistic_C"], max_iter=2000,
+            random_state=cfg["model"]["random_state"],
+        )
+    elif kind == "hgb":
+        clf = HistGradientBoostingClassifier(
+            max_iter=cfg["model"]["hgb_max_iter"],
+            learning_rate=cfg["model"]["hgb_learning_rate"],
+            max_leaf_nodes=cfg["model"]["hgb_max_leaf_nodes"],
+            early_stopping=True, validation_fraction=0.1,
+            random_state=cfg["model"]["random_state"],
+        )
+    else:
+        raise SystemExit(f"config.model.type must be 'hgb' or 'logistic', got {kind!r}")
+    return Pipeline([("prep", features.build_preprocessor()), ("clf", clf)])
+
+
+def _fit_calibrated(kind: str, X: pd.DataFrame, y: np.ndarray, cfg: dict):
+    base = _estimator(kind, cfg)
     method = cfg["model"]["calibration_method"]
     with _quiet_blas():
         if method == "none":
-            base.fit(X, y)
-            return base
-        calibrated = CalibratedClassifierCV(base, method=method, cv=3)
-        calibrated.fit(X, y)
-    return calibrated
+            return base.fit(X, y)
+        model = CalibratedClassifierCV(base, method=method, cv=3)
+        model.fit(X, y)
+    return model
+
+
+def _auc_of(kind: str, Xtr, ytr, Xte, yte, cfg) -> tuple[float, object]:
+    m = _fit_calibrated(kind, Xtr, ytr, cfg)
+    with _quiet_blas():
+        p = m.predict_proba(Xte)[:, 1]
+    return float(roc_auc_score(yte, p)), m
 
 
 def _grade_benchmark(bench_train: pd.DataFrame, bench_test: pd.DataFrame,
@@ -117,10 +134,18 @@ def main() -> float:
     Xtr, ytr = train[feat_cols], train["default_flag"].to_numpy()
     Xte, yte = test[feat_cols], test["default_flag"].to_numpy()
 
-    model = _fit_pd_model(Xtr, ytr, cfg)
+    primary_kind = cfg["model"]["type"]
+    secondary_kind = "logistic" if primary_kind == "hgb" else "hgb"
+
+    model = _fit_calibrated(primary_kind, Xtr, ytr, cfg)
     with _quiet_blas():
         p_tr = model.predict_proba(Xtr)[:, 1]
         p_te = model.predict_proba(Xte)[:, 1]
+
+    # three-way comparison (spec §2.4): primary vs the other model type vs grade-alone
+    secondary_auc, _ = _auc_of(secondary_kind, Xtr, ytr, Xte, yte, cfg)
+    grade_bm = _grade_benchmark(train[["lc_grade"]], test[["lc_grade"]], ytr, yte)
+    lgbm = _lightgbm_delta(Xtr, ytr, Xte, yte, cfg)
 
     fig_dir = cfg["paths"]["figures_dir"]
     evaluate.plot_calibration(yte, p_te, f"{fig_dir}/calibration_test.png",
@@ -129,9 +154,7 @@ def main() -> float:
     evaluate.plot_decile_lift(dec, f"{fig_dir}/decile_lift_test.png",
                               "PD deciles — out-of-time test")
 
-    grade_bm = _grade_benchmark(train[["lc_grade"]], test[["lc_grade"]], ytr, yte)
-    lgbm = _lightgbm_delta(Xtr, ytr, Xte, yte, cfg)
-
+    primary_auc = float(roc_auc_score(yte, p_te))
     metrics = {
         "dataset": {
             "snapshot": cfg["data"]["snapshot_label"],
@@ -139,27 +162,35 @@ def main() -> float:
             "n_train": int(len(train)), "n_test": int(len(test)),
             "train_default_rate": float(ytr.mean()), "test_default_rate": float(yte.mean()),
         },
+        "primary_model": primary_kind,
         "model_train": evaluate.summary(ytr, p_tr),
         "model_test": evaluate.summary(yte, p_te),
+        "comparison_test_auc": {
+            primary_kind: primary_auc,
+            secondary_kind: secondary_auc,
+            "grade_only": grade_bm["auc"],
+        },
         "benchmark_grade_test": grade_bm,
-        "delta_auc_vs_grade": float(roc_auc_score(yte, p_te) - grade_bm["auc"]),
+        "delta_auc_vs_grade": primary_auc - grade_bm["auc"],
         "lightgbm_test": lgbm,
         "decile_table_test": dec.to_dict(orient="records"),
-        "config": {"calibration_method": cfg["model"]["calibration_method"],
+        "config": {"type": primary_kind,
+                   "calibration_method": cfg["model"]["calibration_method"],
                    "logistic_C": cfg["model"]["logistic_C"]},
     }
 
     joblib.dump({"model": model, "feature_columns": feat_cols}, cfg["paths"]["model"])
     evaluate.write_metrics(metrics, cfg["paths"]["metrics"])
 
-    print(f"   test AUC        : {metrics['model_test']['auc']:.4f}")
-    print(f"   grade AUC       : {grade_bm['auc']:.4f}")
-    print(f"   delta AUC       : {metrics['delta_auc_vs_grade']:+.4f}")
+    print(f"   primary ({primary_kind}) AUC : {primary_auc:.4f}")
+    print(f"   {secondary_kind:<14} AUC : {secondary_auc:.4f}")
+    print(f"   grade-only     AUC : {grade_bm['auc']:.4f}")
+    print(f"   delta vs grade     : {metrics['delta_auc_vs_grade']:+.4f}")
     if lgbm.get("available"):
-        print(f"   lightgbm AUC    : {lgbm['auc']:.4f}")
-    print(f"   test KS / Brier : {metrics['model_test']['ks']:.4f} / {metrics['model_test']['brier']:.4f}")
+        print(f"   lightgbm       AUC : {lgbm['auc']:.4f}")
+    print(f"   test KS / Brier    : {metrics['model_test']['ks']:.4f} / {metrics['model_test']['brier']:.4f}")
     con.close()
-    return metrics["model_test"]["auc"]
+    return primary_auc
 
 
 if __name__ == "__main__":

@@ -22,7 +22,15 @@ split:
 model:
   target_positive_statuses: ["Charged Off", "Default", "Late (120+ days)"]
   target_negative_statuses: ["Fully Paid"]
+  # Primary PD model. "hgb" = HistGradientBoosting (sklearn, no libomp needed).
+  # Finding: on origination-time features a linear model tops out at AUC ~0.658 and
+  # LOSES to grade-alone (0.669); HGB reaches ~0.671 and edges past it. Both are always
+  # reported in metrics.json alongside the grade baseline (spec §2.4).
+  type: "hgb"                         # "hgb" | "logistic"
   logistic_C: 1.0
+  hgb_max_iter: 400
+  hgb_learning_rate: 0.05
+  hgb_max_leaf_nodes: 31
   calibration_method: "isotonic"     # "isotonic" | "sigmoid" | "none"
   random_state: 42
   auc_repro_tolerance: 0.005

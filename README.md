@@ -14,7 +14,7 @@ for the full rationale. This README is the operational guide.
 | Artefact | Path | Description |
 |---|---|---|
 | Cleaned analytical DB | `data/credit.duckdb` | raw → staging → feature/outcome → marts |
-| PD model | `artifacts/model.joblib` | calibrated logistic-regression pipeline |
+| PD model | `artifacts/model.joblib` | calibrated PD model (`config.model.type`: `hgb` default, or `logistic`) |
 | Metrics | `artifacts/metrics.json` | AUC / KS / Brier, calibration, benchmark ΔAUC |
 | Figures | `reports/figures/*.png` | calibration curve, decile lift, profit-vs-approval |
 | BI marts | `exports/*.parquet` | `portfolio_summary`, `simulator_base` for Power BI |
