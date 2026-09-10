@@ -43,6 +43,9 @@ def _load_frame(con) -> pd.DataFrame:
 
 
 def _fit_pd_model(X: pd.DataFrame, y: np.ndarray, cfg: dict) -> Pipeline:
+    # NO class_weight: this is a probability-of-default model and calibration is the
+    # point (spec §5.2). Class balancing inflates the raw scores and forces the
+    # calibrator to undo its own distortion. Default ~15-20% is not rare enough to need it.
     base = Pipeline(
         [
             ("prep", features.build_preprocessor()),
@@ -51,7 +54,6 @@ def _fit_pd_model(X: pd.DataFrame, y: np.ndarray, cfg: dict) -> Pipeline:
                 LogisticRegression(
                     C=cfg["model"]["logistic_C"],
                     max_iter=2000,
-                    class_weight="balanced",
                     random_state=cfg["model"]["random_state"],
                 ),
             ),

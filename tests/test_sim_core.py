@@ -34,9 +34,17 @@ def test_thresholds_filter():
 def test_profit_identity():
     m = approved_metrics(DF, 0.40, 600, 0.04, 3.0)
     assert abs(m["exp_profit"] - (m["interest_income"] - m["funding_cost"] - m["exp_loss"])) < 1e-6
-    # all six approved: interest = 6*10000*0.15*3 = 27000 ; funding = 6*10000*0.04*3 = 7200
-    assert abs(m["interest_income"] - 27_000) < 1e-6
+    # all six approved. interest is haircut by (1 - PD): sum(1 - pd) = 5.24
+    #   interest = 10000 * 0.15 * 3 * 5.24 = 23_580 ; funding = 6 * 10000 * 0.04 * 3 = 7_200
+    assert abs(m["interest_income"] - 23_580) < 1e-6
     assert abs(m["funding_cost"] - 7_200) < 1e-6
+
+
+def test_interest_haircut_bends_curve():
+    # with the (1 - PD) haircut, loosening the cut-off eventually REDUCES marginal profit;
+    # the curve should not be strictly increasing to the last point.
+    c = profit_curve(DF, fico_min=600, cost_of_funds=0.04, horizon=3.0, n_points=40)
+    assert c["exp_profit"].idxmax() < len(c) - 1 or c["exp_profit"].diff().iloc[-1] < c["exp_profit"].diff().iloc[1]
 
 
 def test_empty_approved_set():

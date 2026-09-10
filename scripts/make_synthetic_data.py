@@ -49,20 +49,21 @@ def one_row(i: int, rng: random.Random, year: int) -> dict:
     term = rng.choices([36, 60], [0.72, 0.28])[0]
     lti = loan_amnt / annual_inc
 
-    # latent default process (kept modest so AUC lands in a realistic ~0.68-0.72 band)
+    # latent default process. Tuned so the overall default rate lands ~15-18% and
+    # out-of-time AUC lands in a realistic ~0.68-0.72 band.
     z = (
-        -2.15
-        + 3.4 * GRADE_BASE_RATE[grade]
-        - 0.010 * (fico - 700)
-        + 0.022 * (dti - 18)
-        + 0.010 * (revol_util - 45)
-        + 0.18 * inq6
-        + 0.30 * delinq
-        + 0.25 * pub_rec
-        + 1.1 * lti
-        - 0.02 * (emp_years or 0)
-        + (0.15 if term == 60 else 0.0)
-        + rng.gauss(0, 0.55)
+        -3.05
+        + 4.2 * GRADE_BASE_RATE[grade]
+        - 0.011 * (fico - 700)
+        + 0.024 * (dti - 18)
+        + 0.011 * (revol_util - 45)
+        + 0.20 * inq6
+        + 0.34 * delinq
+        + 0.28 * pub_rec
+        + 1.3 * lti
+        - 0.025 * (emp_years or 0)
+        + (0.18 if term == 60 else 0.0)
+        + rng.gauss(0, 0.50)
     )
     pd_true = _logit(z)
     roll = rng.random()

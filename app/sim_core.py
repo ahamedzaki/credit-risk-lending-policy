@@ -1,8 +1,16 @@
 """Pure simulator math — no Streamlit, so it can be unit-tested and reused.
 
-Policy = (PD cut-off, minimum FICO). All money terms are put on the same horizon T
-(spec §5.6): interest income and funding cost are annual rates x T; expected loss is the
-lifetime EL already in the mart.
+Policy = (PD cut-off, minimum FICO). Single-period expected-value model on horizon T
+(spec §5.6):
+
+    interest income (A) = Σ  loan_amnt · int_rate · T · (1 − PD)   # defaulters stop paying
+    funding cost   (A)  = Σ  loan_amnt · r_f · T
+    expected loss  (A)  = Σ  PD · EAD · LGD                        # the EL already in the mart
+    expected profit(A)  = interest income − funding cost − expected loss
+
+The (1 − PD) haircut on interest is what lets the profit-vs-approval curve turn over
+instead of rising forever. It is still an approximation: no cash-flow timing, no
+prepayment, no servicing cost, no recovery lag.
 """
 from __future__ import annotations
 
@@ -22,7 +30,7 @@ def approved_metrics(
     if len(a) == 0 or n_all == 0:
         return dict(approval_rate=0.0, volume=0.0, exp_default_rate=0.0, exp_loss=0.0,
                     interest_income=0.0, funding_cost=0.0, exp_profit=0.0, n=0)
-    interest_income = float((a["loan_amnt"] * a["int_rate"] * horizon).sum())
+    interest_income = float((a["loan_amnt"] * a["int_rate"] * horizon * (1.0 - a["pd_hat"])).sum())
     funding_cost = float((a["loan_amnt"] * cost_of_funds * horizon).sum())
     exp_loss = float(a["expected_loss"].sum())
     return dict(

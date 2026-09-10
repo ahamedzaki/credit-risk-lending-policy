@@ -42,8 +42,10 @@ expected loss for $[x]M more expected profit at +[x] pts approval].
   fragile. This is why multi-scenario stress testing is deferred, not faked.
 - **LGD** fixed at 0.45 → Expected Loss is a rescaling of PD; segment analysis still valid.
 - **EAD** = funded amount, no amortisation → overstates exposure for seasoned loans.
-- **Profit model** — simple interest over T = 3 years, cost of funds 4%, no prepayment or
-  servicing cost. Directional, not P&L-grade.
+- **Profit model** — single-period expected value over T = 3 years: interest income is
+  `loan_amnt · int_rate · T · (1 − PD)` (defaulters stop paying), funding cost 4% · T,
+  expected loss `PD · EAD · LGD`. No cash-flow timing, prepayment or servicing cost.
+  Directional, not P&L-grade.
 - **Circularity** — `grade` / `sub_grade` / `int_rate` excluded from features; `int_rate`
   used only in the profit calculation.
 - **Fairness** — `addr_state` excluded from the model by default; a disparate-impact check

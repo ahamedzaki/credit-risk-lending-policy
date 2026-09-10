@@ -93,9 +93,16 @@ Stages (each runnable on its own, e.g. `python run_pipeline.py train`):
 streamlit run app/simulator.py
 ```
 
-Reads `exports/simulator_base.parquet`. Two levers (PD cut-off, min FICO). Shows approval
-rate, volume, default rate, expected loss, expected profit, and the profit-vs-approval curve.
-Every assumption (LGD, cost of funds, horizon) is shown in the sidebar and lives in `config.yaml`.
+Reads `exports/simulator_base.parquet` (falls back to the committed `*_sample.parquet`).
+Two levers (PD cut-off, min FICO). Shows approval rate, volume, default rate, expected
+loss, expected profit, and the profit-vs-approval curve. Assumptions (LGD, cost of funds,
+horizon) are shown in the sidebar and live in `config.yaml`.
+
+Profit model (single-period, spec §5.6): `interest income = Σ loan_amnt · int_rate · T ·
+(1 − PD)`, `funding cost = Σ loan_amnt · r_f · T`, `expected loss = Σ PD · EAD · LGD`,
+`profit = interest − funding − loss`. The `(1 − PD)` haircut on interest is what lets the
+profit curve turn over. Still an approximation — no cash-flow timing, prepayment or
+servicing cost.
 
 ### Power BI (Windows contributor)
 
@@ -126,8 +133,11 @@ src/features.py           the allowlist + transforms (shared)
 src/train.py              fit + calibrate + grade benchmark + metrics
 src/score.py              batch predict + expected loss
 src/evaluate.py           calibration curve, KS, decile lift
-schema/star_schema.sql    DIM_/FACT_ views (BI exhibit)
-app/simulator.py          Streamlit policy simulator
+schema/star_schema.sql    DIM_/FACT_ views (BI exhibit)  ·  schema/er_diagram.md
+app/simulator.py          Streamlit UI  ·  app/sim_core.py = pure policy/profit math
+scripts/make_synthetic_data.py   LC-schema synthetic generator (local testing / demo)
+tests/test_sim_core.py    unit tests for the simulator math
 notebooks/                01_eda · 02_features_model · 03_expected_loss  (# %% scripts)
 reports/memo.md           one-pager + Assumptions & Limitations
+Makefile                  make install | synth | preflight | pipeline | app | test
 ```
