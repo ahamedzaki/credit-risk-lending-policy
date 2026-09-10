@@ -48,8 +48,13 @@ Nothing runs as a service. One command rebuilds everything.
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # full pipeline + notebooks
 ```
+
+`requirements.txt` is the **slim set the deployed Streamlit app needs** (streamlit, pandas,
+numpy, pyarrow, pyyaml); `requirements-dev.txt` adds duckdb, scikit-learn, lightgbm,
+matplotlib and Jupyter. See `DEPLOY.md` for the Streamlit Community Cloud steps and
+`reports/powerbi_build_guide.md` for the dashboard.
 
 ---
 
