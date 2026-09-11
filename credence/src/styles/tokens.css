@@ -1,0 +1,90 @@
+:root {
+  color-scheme: dark;
+
+  /* ground + surfaces — graphite, trading-desk register */
+  --bg: #0f1114;
+  --surface: #16191e;
+  --surface-inset: #1c2027;
+  --surface-raised: #1a1e24;
+
+  /* ink */
+  --ink: #e7e9ec;
+  --ink-2: #9aa0aa;
+  --ink-3: #7f8691;
+  --ink-disabled: #545a64;
+
+  /* hairlines */
+  --line: #262a31;
+  --line-strong: #333842;
+
+  /* interactive — one restrained periwinkle, used sparingly */
+  --accent: #6e8fd6;
+  --accent-hover: #89a4e2;
+  --accent-weak: #1b2333;
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px rgba(110, 143, 214, 0.55);
+
+  /* risk scale — the only chromatic colour on the surface, tuned for dark */
+  --risk-low: #3fa277;
+  --risk-med: #c79238;
+  --risk-high: #d2673b;
+  --risk-crit: #c6453a;
+  --risk-low-wash: #15251e;
+  --risk-med-wash: #241f13;
+  --risk-high-wash: #241610;
+  --risk-crit-wash: #23120f;
+
+  /* deltas */
+  --pos: #3fa277;
+  --neg: #d2673b;
+  --flat: #7f8691;
+
+  /* elevation — real offset + blur, no coloured halos */
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 40px rgba(0, 0, 0, 0.5);
+
+  /* space scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+
+  /* radius */
+  --r-control: 6px;
+  --r-card: 12px;
+  --r-pill: 999px;
+
+  /* layout */
+  --rail: 208px;
+  --content-max: 1180px;
+
+  /* type */
+  --font: "Public Sans Variable", "Public Sans", system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --fs-display: 34px;
+  --fs-figure: 27px;
+  --fs-h2: 21px;
+  --fs-h3: 16px;
+  --fs-body: 15px;
+  --fs-sm: 13px;
+  --fs-label: 12px;
+  --fs-micro: 11px;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-control: 120ms;
+  --t-fade: 180ms;
+  --t-drawer: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-control: 0ms;
+    --t-fade: 0ms;
+    --t-drawer: 0ms;
+  }
+}

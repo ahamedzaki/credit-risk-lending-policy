@@ -18,6 +18,7 @@ artifacts/*
 !artifacts/lgd.json
 !artifacts/backtest.json
 !artifacts/fairness.json
+!artifacts/insight.json
 # model.joblib stays ignored — the hosted dashboard reads the sample parquet, not the model.
 
 # demo/synthetic data generator output (keep the script, not its output)
