@@ -32,7 +32,9 @@ app:
 	.venv/bin/streamlit run app/simulator.py
 
 test:
+	$(PY) tests/test_evaluate.py
 	$(PY) tests/test_sim_core.py
+	$(PY) tests/test_methodology.py
 
 clean:
 	rm -f data/credit.duckdb data/credit.duckdb.wal exports/*.parquet reports/figures/*.png

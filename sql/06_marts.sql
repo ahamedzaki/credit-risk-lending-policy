@@ -4,6 +4,11 @@
 --   mart_portfolio_summary aggregated view for Power BI page 1
 --
 -- Placeholders: ${lgd}  ${ead_mode}   (ead_mode: 'funded' | 'outstanding')
+-- ${lgd} is the flat, exposure-weighted portfolio LGD (fallback only, e.g. a grade with
+-- no charged-off history). Real LGD is segmented by grade via `lgd_by_grade` (written by
+-- src/lgd.py: estimate_by_grade + write_grade_table, credibility-weighted toward the flat
+-- value for thin grades) — this is what actually feeds Expected Loss below. Flat LGD
+-- alone hid a real 44%-vs-60% spread by grade; see artifacts/lgd.json's "by_grade" key.
 
 DROP TABLE IF EXISTS mart_loan_el;
 CREATE TABLE mart_loan_el AS
@@ -14,14 +19,16 @@ SELECT
         WHEN 'outstanding' THEN COALESCE(o.out_prncp, o.funded_amnt, o.loan_amnt)
         ELSE COALESCE(o.funded_amnt, o.loan_amnt)
     END                                             AS ead,
-    ${lgd}                                           AS lgd,
+    COALESCE(g.lgd, ${lgd})                          AS lgd,
     s.pd_hat *
       (CASE '${ead_mode}'
            WHEN 'outstanding' THEN COALESCE(o.out_prncp, o.funded_amnt, o.loan_amnt)
            ELSE COALESCE(o.funded_amnt, o.loan_amnt)
-       END) * ${lgd}                                 AS expected_loss
+       END) * COALESCE(g.lgd, ${lgd})                AS expected_loss
 FROM mart_scores s
-JOIN mart_loan_outcomes o USING (loan_id);
+JOIN mart_loan_outcomes o USING (loan_id)
+LEFT JOIN mart_loan_benchmark b USING (loan_id)
+LEFT JOIN lgd_by_grade g ON g.grade = b.lc_grade;
 
 DROP TABLE IF EXISTS mart_simulator_base;
 CREATE TABLE mart_simulator_base AS

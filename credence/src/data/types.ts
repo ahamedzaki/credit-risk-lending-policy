@@ -67,7 +67,10 @@ export interface FairnessGroup {
 export interface FairnessDim {
   groups: FairnessGroup[];
   air: number;
+  airCi: [number, number];
   passes: boolean;
+  flaggedSignificant: boolean; // true if the CI's upper bound stays below 0.80 — a real
+  // finding, not noise, even after correcting for testing 3 dimensions at once (Bonferroni)
 }
 
 export interface FeatureImportanceRow {
@@ -80,6 +83,41 @@ export interface LgdByGradeRow {
   grade: string;
   lgd: number;
   n_charged_off_train: number;
+}
+
+export type PsiBand = "stable" | "moderate shift" | "material shift";
+
+export interface PsiFeatureResult {
+  feature: string;
+  label: string;
+  psi: number | null;
+  band: PsiBand | null;
+}
+
+export interface PsiResult {
+  scope: string;
+  scorePsi: number;
+  scoreBand: PsiBand;
+  features: PsiFeatureResult[];
+  nTrain: number;
+  nTest: number;
+}
+
+export interface ExplainedLoanDriver {
+  feature: string;
+  label: string;
+  contributionPp: number; // percentage points of PD, real model output
+}
+
+export interface ExplainedLoan {
+  loanId: number;
+  riskBand: RiskBand;
+  pd: number;
+  ficoMid: number;
+  dti: number;
+  purpose: string;
+  loanAmnt: number;
+  topDrivers: ExplainedLoanDriver[];
 }
 
 /* ---------- DEMO: synthetic ---------- */

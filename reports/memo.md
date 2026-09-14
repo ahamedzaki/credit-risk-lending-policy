@@ -112,8 +112,11 @@ SHAP attributions) — noted, not built. (`artifacts/fairness.json`)
   under-predicted (risk-tail compression); global isotonic calibration does not fix it.
   Treat PD as a ranking tool and a calibrated probability in the bulk of the book, not a
   precise low-grade probability.
-- **LGD** — estimated at 0.50 from this book's charged-off recoveries (was assumed 0.45).
-  Still a single number, so EL is a rescaling of PD; a v2 would model LGD by segment.
+- **LGD** — estimated at 0.50 from this book's charged-off recoveries (was assumed 0.45),
+  now segmented by grade (44% on A to 60% on G) and credibility-weighted toward that flat
+  figure for thin grades (Buhlmann credibility, `src/lgd.py`) — feeds Expected Loss
+  directly rather than sitting as a supplementary side stat. Still not segmented by
+  vintage or macro regime, and still a point estimate with no confidence interval.
 - **EAD** = funded amount, no amortisation → overstates exposure for seasoned loans.
 - **Profit model** — expected value over T = 3 yr: interest and funding accrue on
   `b · principal` (b = 0.52), interest also × `(1 − PD)`; flat 0.4%/yr servicing;
@@ -123,19 +126,60 @@ SHAP attributions) — noted, not built. (`artifacts/fairness.json`)
   level.
 - **Circularity** — `grade` / `sub_grade` / `int_rate` excluded from features; `int_rate`
   used only in the profit calculation.
-- **Fairness** — no protected-class data; the checks above are proxy disparate-impact only.
-  Adverse-action reason codes not built.
+- **Fairness** — no protected-class data; the checks above are proxy disparate-impact
+  only. Both flagged dimensions (income band, home ownership) are now confirmed
+  statistically significant via a stratified bootstrap CI, Bonferroni-corrected for
+  testing 3 dimensions at once (`src/fairness.py`) — not just a point estimate below
+  0.80. Per-decision (ECOA/Reg B) adverse-action reason codes are still not built; what
+  exists instead is a real global feature-importance ranking (`src/insight.py`) and a
+  real per-loan marginal-contribution attribution on the actual trained model for a small
+  sample of test loans (`src/explain.py`) — a genuine sensitivity on the real model, but
+  explicitly not an exact Shapley-value decomposition, and not a production reason-code
+  system generated per live decision.
 - **Temporal validity** — 2012–2016 originations from a now-defunct retail platform in a
   zero-rate regime. Directionally useful; not a 2026 production scorecard.
 - **Dataset** — Kaggle mirror `wordsforthewise/lending-club`, snapshot 2018Q4.
 
 ## What would be needed for real use
-Reject-inference modelling; LGD and EAD models (not constants); recession stress scenarios;
-population-stability monitoring; per-decision reason codes; a fair-lending review with
-real protected-class data; and independent model validation (SR 11-7). This project is a
-decision-support analysis and an honest map of those gaps — not a deployable underwriting
-model.
+Reject-inference modelling; an EAD model (not a constant); recession stress scenarios;
+LIVE population-stability monitoring against scored production traffic (see below — a
+real but retrospective version now exists); per-decision reason codes at production
+grade; a fair-lending review with real protected-class data; and independent model
+validation (SR 11-7). This project is a decision-support analysis and an honest map of
+those gaps — not a deployable underwriting model.
 
-## Deferred (future work)
-Early-warning system for post-origination deterioration; risk-state migration matrices;
-multi-scenario macro stress testing.
+## Post-audit fixes (this pass)
+A ruthless audit of this exact codebase found several gaps between what was claimed and
+what was implemented. Fixed, with evidence in `src/`:
+- **LGD segmented by grade**, credibility-weighted, now feeding Expected Loss directly
+  (`src/lgd.py`, `sql/06_marts.sql`) — was previously a single flat number.
+- **Fairness AIR given a real confidence interval**, Bonferroni-corrected for testing 3
+  dimensions (`src/fairness.py`) — was previously a bare point estimate.
+- **A real population-stability (PSI) check** between the pipeline's own train (2012-14)
+  and test (2015-16) cohorts, on the model's own score and its top features
+  (`src/monitor.py`). This is retrospective, not a live monitor — stated as such, see
+  "Deferred" below.
+- **A real per-loan attribution sample** on the actual trained model, not a synthetic
+  scoring function (`src/explain.py`) — labelled precisely as marginal-contribution
+  attribution, not SHAP, and not a production per-decision reason-code system.
+- **CI added** (`.github/workflows/ci.yml`) running both real test suites plus a new one
+  covering the LGD/PSI/fairness logic (`tests/test_methodology.py`) on every push —
+  there was previously no CI at all.
+- Two dead/misleading config keys corrected (`config.yaml`'s `target_positive_statuses`
+  previously listed a status the SQL never actually treats as positive); two verified
+  dashboard bugs fixed in CREDENCE (a tautological "high-risk approval" formula, a
+  hardcoded average risk score that didn't match its own generator).
+
+## Deferred (future work) — and why
+- **A true, LIVE early-warning / drift-monitoring system** — not built, because there is
+  no scored production traffic to monitor. What exists instead (`src/monitor.py`) is a
+  real, retrospective PSI comparison between the two cohorts the pipeline already has;
+  it is explicitly labelled as that, not as a live monitor, in its own output.
+- **Risk-state migration matrices** — genuinely not buildable with this dataset: Lending
+  Club's accepted-loans data has no month-by-month delinquency/DPD panel, only
+  origination-time fields plus a single terminal outcome per loan. A migration matrix
+  needs a loan's risk classification tracked over time; that data does not exist here.
+  Faking one from origination-time data alone would be worse than not having it.
+- **Multi-scenario macro stress testing** — not built: the training/test window (2012-16)
+  contains no recession, so any stress scenario would be pure extrapolation with nothing
+  to validate it against. Deferred deliberately, not from lack of time.

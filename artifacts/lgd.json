@@ -3,5 +3,57 @@
   "lgd_loan_mean": 0.503,
   "recovery_rate": 0.5005,
   "n_charged_off_train": 40596,
-  "method": "1 - sum(total_rec_prncp + recoveries) / sum(funded_amnt), charged-off train loans"
+  "method": "1 - sum(total_rec_prncp + recoveries) / sum(funded_amnt), charged-off train loans",
+  "by_grade": [
+    {
+      "grade": "A",
+      "n_charged_off_train": 3458,
+      "lgd_raw": 0.4436,
+      "credibility": 0.634,
+      "lgd": 0.4641
+    },
+    {
+      "grade": "B",
+      "n_charged_off_train": 11790,
+      "lgd_raw": 0.4727,
+      "credibility": 0.855,
+      "lgd": 0.4766
+    },
+    {
+      "grade": "C",
+      "n_charged_off_train": 13090,
+      "lgd_raw": 0.5003,
+      "credibility": 0.867,
+      "lgd": 0.5002
+    },
+    {
+      "grade": "D",
+      "n_charged_off_train": 8582,
+      "lgd_raw": 0.5333,
+      "credibility": 0.811,
+      "lgd": 0.5269
+    },
+    {
+      "grade": "E",
+      "n_charged_off_train": 2837,
+      "lgd_raw": 0.5602,
+      "credibility": 0.587,
+      "lgd": 0.5351
+    },
+    {
+      "grade": "F",
+      "n_charged_off_train": 766,
+      "lgd_raw": 0.5946,
+      "credibility": 0.277,
+      "lgd": 0.5258
+    },
+    {
+      "grade": "G",
+      "n_charged_off_train": 73,
+      "lgd_raw": 0.6,
+      "credibility": 0.035,
+      "lgd": 0.503
+    }
+  ],
+  "by_grade_method": "Buhlmann credibility toward the flat LGD, full_credibility_n=2000 charged-off loans. This segmented table feeds Expected Loss (06_marts.sql); `lgd_data` above remains the flat fallback for any grade not in the table."
 }

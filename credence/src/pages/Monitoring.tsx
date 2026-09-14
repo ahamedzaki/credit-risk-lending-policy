@@ -1,11 +1,15 @@
 import { PageHead } from "../components/AppShell";
 import { AlertTimeline } from "../components/blocks";
 import { BarStrip, CalibrationChart, Sparkline } from "../components/charts";
-import { Card, DemoBadge, Delta, Section, Stat } from "../components/primitives";
+import { Card, DemoBadge, Delta, RiskPill, Section, Stat } from "../components/primitives";
 import { emerging, monthly } from "../data/demo";
 import * as R from "../data/real";
 import { fixed, pct, usdCompact } from "../lib/format";
 import { RISK_HEX } from "../lib/risk";
+
+function psiTone(band: string) {
+  return band === "stable" ? RISK_HEX.Low : band === "moderate shift" ? RISK_HEX.Medium : RISK_HEX.High;
+}
 
 function TrendTile({
   label,
@@ -157,6 +161,71 @@ export function Monitoring() {
             per-loan explainer) — noted as a limitation on Data/Model, not built here.
           </p>
         </Card>
+
+        <div className="cardgrid cardgrid--2">
+          <Card
+            title="Population stability (PSI)"
+            note="Real, but retrospective — the pipeline's own train (2012–14) vs test (2015–16) cohorts, not a live production feed."
+          >
+            <div className="stripset">
+              <div className="grade-conc" style={{ gridTemplateColumns: "170px 1fr 110px" }}>
+                <span style={{ fontWeight: 600 }}>Model score (PD)</span>
+                <div className="dualbar">
+                  <i style={{ width: `${Math.min(100, (R.psi.scorePsi / 0.25) * 100)}%`, background: psiTone(R.psi.scoreBand) }} />
+                </div>
+                <span style={{ color: psiTone(R.psi.scoreBand) }}>{fixed(R.psi.scorePsi, 4)} · {R.psi.scoreBand}</span>
+              </div>
+              {R.psi.features.map((f) => (
+                <div key={f.feature} className="grade-conc" style={{ gridTemplateColumns: "170px 1fr 110px" }}>
+                  <span>{f.label}</span>
+                  <div className="dualbar">
+                    <i style={{ width: `${Math.min(100, ((f.psi ?? 0) / 0.25) * 100)}%`, background: psiTone(f.band ?? "stable") }} />
+                  </div>
+                  <span style={{ color: psiTone(f.band ?? "stable") }}>{fixed(f.psi ?? 0, 4)} · {f.band}</span>
+                </div>
+              ))}
+            </div>
+            <p className="note">
+              PSI &lt; 0.10 = stable, 0.10–0.25 = moderate shift, ≥ 0.25 = material shift — standard
+              risk-monitoring thresholds. Every feature reads stable here, which is itself a real
+              finding: the model's newer (test) population looks like its older (train) population,
+              so the AUC softening above is genuine seasoning, not a population shift in disguise.
+            </p>
+          </Card>
+
+          <Card
+            title="Real per-loan sample"
+            note="12 real out-of-time test loans, 3 per risk band, explained by perturbing the actual trained model."
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {R.explainedLoans.map((loan) => (
+                <div key={loan.loanId} className="grade-conc" style={{ gridTemplateColumns: "50px 70px 1fr" }}>
+                  <RiskPill band={loan.riskBand} />
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>PD {pct(loan.pd, 1)}</span>
+                  <span>
+                    {loan.topDrivers[0].label}{" "}
+                    <b style={{ color: loan.topDrivers[0].contributionPp >= 0 ? RISK_HEX.High : RISK_HEX.Low }}>
+                      {loan.topDrivers[0].contributionPp >= 0 ? "+" : ""}
+                      {loan.topDrivers[0].contributionPp.toFixed(1)}pp
+                    </b>
+                    {" · "}
+                    {loan.topDrivers[1].label}{" "}
+                    <span style={{ color: loan.topDrivers[1].contributionPp >= 0 ? RISK_HEX.High : RISK_HEX.Low }}>
+                      {loan.topDrivers[1].contributionPp >= 0 ? "+" : ""}
+                      {loan.topDrivers[1].contributionPp.toFixed(1)}pp
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="note">
+              Each figure is the real PD change (percentage points) when that one input is reset to
+              the test population's typical value, holding everything else fixed — a genuine
+              sensitivity on the actual model, computed per loan. Not an exact Shapley-value (SHAP)
+              decomposition, and not a per-decision reason-code system — see Data/Model.
+            </p>
+          </Card>
+        </div>
 
         <Card title="Benchmark" note="Does the model beat the lender's own risk grade?" aside={undefined}>
           <div className="stripset">

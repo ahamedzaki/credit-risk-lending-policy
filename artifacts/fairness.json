@@ -3,7 +3,7 @@
     "pd_cutoff": 0.15,
     "min_fico": 660
   },
-  "note": "No protected-class attributes in Lending Club data \u2014 this is a disparate-impact proxy check, not a fair-lending test. A production model owes ECOA/Reg B adverse-action reason codes (per-decision SHAP); not built here.",
+  "note": "No protected-class attributes in Lending Club data \u2014 this is a disparate-impact proxy check, not a fair-lending test. A production model owes ECOA/Reg B adverse-action reason codes (per-decision SHAP); not built here. AIR confidence intervals are Bonferroni-corrected for testing 3 dimensions at once (alpha=0.05 -> 0.0167 per dimension).",
   "overall_approval_rate": 0.6282,
   "by_income_band": {
     "group_n": {
@@ -19,7 +19,13 @@
       "120k+": 0.8612
     },
     "adverse_impact_ratio": 0.416,
+    "air_ci": [
+      0.41,
+      0.421
+    ],
+    "air_ci_method": "nonparametric stratified bootstrap, n=2000, 98.33% CI (Bonferroni-corrected for 3 dimensions tested)",
     "passes_4_5ths_rule": false,
+    "flagged_significant": true,
     "approved_book_default_rate": {
       "<40k": 0.1105,
       "40-70k": 0.0974,
@@ -41,7 +47,13 @@
       "West": 0.6313
     },
     "adverse_impact_ratio": 0.958,
+    "air_ci": [
+      0.947,
+      0.964
+    ],
+    "air_ci_method": "nonparametric stratified bootstrap, n=2000, 98.33% CI (Bonferroni-corrected for 3 dimensions tested)",
     "passes_4_5ths_rule": true,
+    "flagged_significant": false,
     "approved_book_default_rate": {
       "Midwest": 0.0886,
       "Northeast": 0.0994,
@@ -63,7 +75,13 @@
       "RENT": 0.5102
     },
     "adverse_impact_ratio": 0.684,
+    "air_ci": [
+      0.679,
+      0.689
+    ],
+    "air_ci_method": "nonparametric stratified bootstrap, n=2000, 98.33% CI (Bonferroni-corrected for 3 dimensions tested)",
     "passes_4_5ths_rule": false,
+    "flagged_significant": true,
     "approved_book_default_rate": {
       "ANY": 0.0,
       "MORTGAGE": 0.086,

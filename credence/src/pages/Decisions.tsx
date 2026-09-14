@@ -2,18 +2,27 @@ import { PageHead } from "../components/AppShell";
 import { BarPair, LineChart } from "../components/charts";
 import { Card, DemoBadge, Section, Stat } from "../components/primitives";
 import { ThresholdSimulator } from "../components/ThresholdSimulator";
-import { monthly } from "../data/demo";
+import { borrowers, monthly } from "../data/demo";
 import * as R from "../data/real";
 import { interpCurve } from "../lib/curve";
 import { count, pct, usdCompact } from "../lib/format";
 import { RISK_HEX } from "../lib/risk";
 
+const CURRENT_CUT = 0.15;
+const CRITICAL_PD_FLOOR = 0.2; // matches DEFAULT_CUTS.critical in lib/risk.ts
+
 export function Decisions() {
-  const atCurrent = interpCurve(R.backtest, 0.15);
-  const highRiskApproval =
-    R.byRiskBand[3].loans > 0
-      ? (R.byRiskBand[3].loans * atCurrent.approval_rate) / R.byRiskBand[3].loans
-      : 0;
+  const atCurrent = interpCurve(R.backtest, CURRENT_CUT);
+  // Under a hard "approve if PD < cut" policy, a loan in the Critical band (PD >= 20%)
+  // can only be approved if the cut itself is above the band floor. At the current
+  // (real, backtested) 15% cut, that's never true — so the honest number is exactly 0%,
+  // not some fraction of the overall approval rate. (Fixes a prior bug where this was
+  // computed as `(band.loans * rate) / band.loans`, which algebraically cancels to just
+  // the portfolio-wide approval rate regardless of band — never actually the Critical-band
+  // figure the label claimed.)
+  const highRiskApproval = CURRENT_CUT <= CRITICAL_PD_FLOOR ? 0 : null;
+
+  const avgRiskScore = borrowers.reduce((s, b) => s + b.risk_score, 0) / borrowers.length;
 
   const appTrend = monthly.slice(-18).map((m) => 0.66 - (m.default_rate - 0.12) * 0.9);
 
@@ -27,8 +36,16 @@ export function Decisions() {
       <div className="metricline">
         <Stat label="Approval rate" figure={pct(R.overallApprovalRate, 0)} />
         <Stat label="Rejection rate" figure={pct(1 - R.overallApprovalRate, 0)} />
-        <Stat label="High-risk approval" figure={pct(highRiskApproval * 0.42, 0)} sub={<span>of PD ≥ 20% applicants</span>} />
-        <Stat label="Avg risk score" figure="46 / 100" sub={<DemoBadge what="scoring function" />} />
+        <Stat
+          label="High-risk approval"
+          figure={pct(highRiskApproval ?? 0, 0)}
+          sub={<span>of PD ≥ 20% applicants, at the {pct(CURRENT_CUT, 0)} cut-off</span>}
+        />
+        <Stat
+          label="Avg risk score"
+          figure={`${avgRiskScore.toFixed(0)} / 100`}
+          sub={<DemoBadge what="scoring function, computed live from the 220-borrower set" />}
+        />
         <Stat label="Expected loss" figure={usdCompact(atCurrent.model_expected_loss)} sub={<span>at PD &lt; 15% cut-off</span>} />
         <Stat label="Realised loss" figure={usdCompact(atCurrent.realized_credit_loss)} sub={<span>1.13× model EL</span>} />
       </div>

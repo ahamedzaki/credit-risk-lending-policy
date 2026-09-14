@@ -49,6 +49,10 @@ LABEL = {
     "acc_open_past_24mths": "Accounts opened, last 24m",
     "mths_since_recent_inq": "Months since last inquiry",
     "mths_since_recent_bc": "Months since newest bankcard",
+    "revol_bal": "Revolving balance",
+    "total_bc_limit": "Total bankcard limit",
+    "num_actv_bc_tl": "Active bankcard trades",
+    "bc_open_to_buy": "Unused bankcard credit",
     "num_tl_op_past_12m": "Trades opened, last 12m",
     "annual_inc": "Annual income",
     "num_accts_ever_120_pd": "Accounts ever 120+ DPD",
@@ -112,46 +116,34 @@ def _feature_importance(con, cfg, sample_n: int = 15_000, n_repeats: int = 5) ->
     }
 
 
-def _lgd_by_grade(con, oot_cutoff: str) -> dict:
-    rows = con.execute(
-        f"""
-        SELECT b.lc_grade AS grade,
-               count(*)                                                    AS n_charged_off,
-               sum(o.funded_amnt)                                          AS ead_sum,
-               sum(coalesce(o.total_rec_prncp, 0) + coalesce(o.recoveries, 0)) AS recovered_sum
-        FROM mart_loan_outcomes o
-        JOIN mart_loan_benchmark b USING (loan_id)
-        WHERE o.default_flag = 1 AND o.issue_d < DATE '{oot_cutoff}'
-        GROUP BY b.lc_grade
-        ORDER BY b.lc_grade
-        """
-    ).fetchdf()
-    out = []
-    for _, r in rows.iterrows():
-        recovery_rate = float(r["recovered_sum"] / r["ead_sum"]) if r["ead_sum"] else None
-        out.append(
-            {
-                "grade": r["grade"],
-                "n_charged_off_train": int(r["n_charged_off"]),
-                "lgd": round(1.0 - recovery_rate, 4) if recovery_rate is not None else None,
-            }
-        )
+def _lgd_by_grade(con, cfg) -> dict:
+    """Reads the canonical segmented-LGD estimate — same function src/lgd.py uses to build
+    the `lgd_by_grade` table that 06_marts.sql joins for Expected Loss. Single source of
+    truth: this module reports it, it does not independently recompute it."""
+    from src import lgd as lgd_mod
+
+    flat = lgd_mod.resolve(cfg, con)
+    by_grade = lgd_mod.estimate_by_grade(con, cfg["split"]["oot_cutoff"], flat)
     return {
-        "method": "Same as lgd.py: 1 − (principal repaid + recoveries) / funded, per grade, train charged-off loans only.",
-        "by_grade": out,
+        "method": (
+            "1 − (principal repaid + recoveries) / funded, per grade, train charged-off loans "
+            f"only, Buhlmann credibility-weighted toward the flat LGD (full_credibility_n="
+            f"{lgd_mod.FULL_CREDIBILITY_N})."
+        ),
+        "by_grade": by_grade,
         "note": (
-            "Supplementary — the headline LGD/Expected Loss figures still use the single "
-            "exposure-weighted 49.95% portfolio LGD; this shows the range that flat number hides."
+            "This is the LGD actually used in Expected Loss (mart_loan_el joins this table by "
+            "grade, falling back to the flat portfolio LGD for any grade not present)."
         ),
     }
 
 
 def main() -> dict:
     cfg = load()
-    con = connect(cfg["paths"]["duckdb"], read_only=True)
+    con = connect(cfg["paths"]["duckdb"])
     out = {
         "feature_importance": _feature_importance(con, cfg),
-        "lgd_by_grade": _lgd_by_grade(con, cfg["split"]["oot_cutoff"]),
+        "lgd_by_grade": _lgd_by_grade(con, cfg),
     }
     con.close()
     (ROOT / "artifacts").mkdir(exist_ok=True)

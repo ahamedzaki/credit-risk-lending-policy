@@ -29,7 +29,7 @@ from src.db import connect, run_sql_file, show
 
 ROOT = pathlib.Path(__file__).resolve().parent
 STAGES = ["raw", "stage", "features", "lgd", "train", "score", "marts",
-          "export", "backtest", "fairness", "check"]
+          "export", "backtest", "fairness", "monitor", "insight", "explain", "check"]
 
 
 def _banner(name: str) -> None:
@@ -116,6 +116,24 @@ def stage_fairness(cfg, params, con):
     fairness_main()
 
 
+def stage_monitor(cfg, params, con):
+    from src.monitor import main as monitor_main
+
+    monitor_main()
+
+
+def stage_insight(cfg, params, con):
+    from src.insight import main as insight_main
+
+    insight_main()
+
+
+def stage_explain(cfg, params, con):
+    from src.explain import main as explain_main
+
+    explain_main()
+
+
 def stage_check(cfg, params, con):
     """Retrain and assert the test AUC reproduces — guards against a stale committed model."""
     from src.train import main as train_main
@@ -134,6 +152,7 @@ DISPATCH = {
     "raw": stage_raw, "stage": stage_stage, "features": stage_features,
     "lgd": stage_lgd, "train": stage_train, "score": stage_score, "marts": stage_marts,
     "export": stage_export, "backtest": stage_backtest, "fairness": stage_fairness,
+    "monitor": stage_monitor, "insight": stage_insight, "explain": stage_explain,
     "check": stage_check,
 }
 

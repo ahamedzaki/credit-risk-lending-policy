@@ -3,122 +3,136 @@
     "method": "sklearn.inspection.permutation_importance, scoring=roc_auc",
     "sample_n": 15000,
     "n_repeats": 5,
-    "baseline_auc_on_sample": 0.6924600344084304,
+    "baseline_auc_on_sample": 0.6801051004630043,
     "top": [
       {
         "feature": "fico_mid",
         "label": "Credit score (FICO)",
-        "importance_mean": 0.02282160705196381,
-        "importance_std": 0.0019507378357737082
+        "importance_mean": 0.01995854622658446,
+        "importance_std": 0.0023202581582707714
       },
       {
         "feature": "acc_open_past_24mths",
         "label": "Accounts opened, last 24m",
-        "importance_mean": 0.018161312168761268,
-        "importance_std": 0.001375615987889491
-      },
-      {
-        "feature": "loan_to_income",
-        "label": "Loan-to-income ratio",
-        "importance_mean": 0.013132189666519722,
-        "importance_std": 0.001198211485403176
+        "importance_mean": 0.01807557260119248,
+        "importance_std": 0.0015921159120037987
       },
       {
         "feature": "dti",
         "label": "Debt-to-income ratio",
-        "importance_mean": 0.009142991417605573,
-        "importance_std": 0.001309480155758587
+        "importance_mean": 0.011907707101925857,
+        "importance_std": 0.00024920012746420606
       },
       {
-        "feature": "num_tl_op_past_12m",
-        "label": "Trades opened, last 12m",
-        "importance_mean": 0.005002116721446947,
-        "importance_std": 0.0005577205567349703
-      },
-      {
-        "feature": "purpose",
-        "label": "Loan purpose",
-        "importance_mean": 0.004904420266493248,
-        "importance_std": 0.001202567282312599
-      },
-      {
-        "feature": "annual_inc",
-        "label": "Annual income",
-        "importance_mean": 0.004744970756482081,
-        "importance_std": 0.0012135687568218558
-      },
-      {
-        "feature": "mo_sin_old_rev_tl_op",
-        "label": "Age of oldest revolving trade",
-        "importance_mean": 0.0039869077209418345,
-        "importance_std": 0.000293310700492113
-      },
-      {
-        "feature": "loan_amnt",
-        "label": "Loan amount",
-        "importance_mean": 0.0030884946008256087,
-        "importance_std": 0.0005976810883682887
-      },
-      {
-        "feature": "home_ownership",
-        "label": "Home ownership",
-        "importance_mean": 0.002536045912423046,
-        "importance_std": 0.00022822114148998045
+        "feature": "loan_to_income",
+        "label": "Loan-to-income ratio",
+        "importance_mean": 0.011904660901350384,
+        "importance_std": 0.0023403326991864974
       },
       {
         "feature": "mths_since_recent_bc",
         "label": "Months since newest bankcard",
-        "importance_mean": 0.002441025832420074,
-        "importance_std": 0.0013921793635218859
+        "importance_mean": 0.005210718743755649,
+        "importance_std": 0.0010822937158977888
       },
       {
-        "feature": "total_acc",
-        "label": "Total accounts",
-        "importance_mean": 0.0024064574508471325,
-        "importance_std": 0.00043206277678818324
+        "feature": "purpose",
+        "label": "Loan purpose",
+        "importance_mean": 0.005186334598815257,
+        "importance_std": 0.0007167422420254355
+      },
+      {
+        "feature": "num_tl_op_past_12m",
+        "label": "Trades opened, last 12m",
+        "importance_mean": 0.005108994546973822,
+        "importance_std": 0.0007050998177328811
+      },
+      {
+        "feature": "inq_last_6mths",
+        "label": "Inquiries, last 6 months",
+        "importance_mean": 0.003928929886822719,
+        "importance_std": 0.000261848607436774
+      },
+      {
+        "feature": "percent_bc_gt_75",
+        "label": "% bankcards over 75% utilised",
+        "importance_mean": 0.0033099986372069567,
+        "importance_std": 0.00046930723167803247
+      },
+      {
+        "feature": "loan_amnt",
+        "label": "Loan amount",
+        "importance_mean": 0.0032686749998064313,
+        "importance_std": 0.0005389013934345424
+      },
+      {
+        "feature": "num_actv_bc_tl",
+        "label": "Active bankcard trades",
+        "importance_mean": 0.0031197201537684904,
+        "importance_std": 0.000855457248716894
+      },
+      {
+        "feature": "mths_since_recent_inq",
+        "label": "Months since last inquiry",
+        "importance_mean": 0.0027636745597795277,
+        "importance_std": 0.00030818319912342366
       }
     ],
     "note": "Global attribution on the shipped model, not per-loan SHAP \u2014 mean AUC drop when a feature's values are shuffled, averaged over 5 repeats on a 15,000-loan sample of the out-of-time test set. Per-decision reason codes (ECOA/Reg B adverse-action) would need a real per-loan explainer; not built here."
   },
   "lgd_by_grade": {
-    "method": "Same as lgd.py: 1 \u2212 (principal repaid + recoveries) / funded, per grade, train charged-off loans only.",
+    "method": "1 \u2212 (principal repaid + recoveries) / funded, per grade, train charged-off loans only, Buhlmann credibility-weighted toward the flat LGD (full_credibility_n=2000).",
     "by_grade": [
       {
         "grade": "A",
         "n_charged_off_train": 3458,
-        "lgd": 0.4436
+        "lgd_raw": 0.4436,
+        "credibility": 0.634,
+        "lgd": 0.4641
       },
       {
         "grade": "B",
         "n_charged_off_train": 11790,
-        "lgd": 0.4727
+        "lgd_raw": 0.4727,
+        "credibility": 0.855,
+        "lgd": 0.4766
       },
       {
         "grade": "C",
         "n_charged_off_train": 13090,
-        "lgd": 0.5003
+        "lgd_raw": 0.5003,
+        "credibility": 0.867,
+        "lgd": 0.5002
       },
       {
         "grade": "D",
         "n_charged_off_train": 8582,
-        "lgd": 0.5333
+        "lgd_raw": 0.5333,
+        "credibility": 0.811,
+        "lgd": 0.5269
       },
       {
         "grade": "E",
         "n_charged_off_train": 2837,
-        "lgd": 0.5602
+        "lgd_raw": 0.5602,
+        "credibility": 0.587,
+        "lgd": 0.5351
       },
       {
         "grade": "F",
         "n_charged_off_train": 766,
-        "lgd": 0.5946
+        "lgd_raw": 0.5946,
+        "credibility": 0.277,
+        "lgd": 0.5258
       },
       {
         "grade": "G",
         "n_charged_off_train": 73,
-        "lgd": 0.6
+        "lgd_raw": 0.6,
+        "credibility": 0.035,
+        "lgd": 0.503
       }
     ],
-    "note": "Supplementary \u2014 the headline LGD/Expected Loss figures still use the single exposure-weighted 49.95% portfolio LGD; this shows the range that flat number hides."
+    "note": "This is the LGD actually used in Expected Loss (mart_loan_el joins this table by grade, falling back to the flat portfolio LGD for any grade not present)."
   }
 }

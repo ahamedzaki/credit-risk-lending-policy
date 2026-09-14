@@ -154,7 +154,7 @@ export function Portfolio() {
 
       <Card
         title="Loss given default by grade"
-        note="Same method as the portfolio LGD — recovery on charged-off training loans — segmented by grade instead of pooled."
+        note="Same recovery-based method as the portfolio LGD, segmented by grade and credibility-weighted toward that flat figure for thin grades (Buhlmann) — this is what actually feeds Expected Loss, not a flat multiplier."
       >
         <BarStrip
           rows={R.lgdByGrade.map((r) => ({ name: `Grade ${r.grade}`, value: r.lgd, sub: count(r.n_charged_off_train) + " charge-offs" }))}
@@ -163,10 +163,11 @@ export function Portfolio() {
           highlight={hl("grade")}
         />
         <p className="note">
-          LGD runs from {pct(R.lgdByGrade[0].lgd, 0)} on Grade A to {pct(R.lgdByGrade[R.lgdByGrade.length - 1].lgd, 0)} on
-          Grade G — riskier grades recover less, not just default more. The headline Expected Loss
-          figure still uses the single {pct(R.totals.lgd, 0)} portfolio-wide LGD; this is the range that
-          flat number hides.
+          LGD runs from {pct(Math.min(...R.lgdByGrade.map((r) => r.lgd)), 0)} (Grade A) to{" "}
+          {pct(Math.max(...R.lgdByGrade.map((r) => r.lgd)), 0)} (Grade E) — riskier grades recover less,
+          not just default more. Grades F and G shrink back toward the flat {pct(R.totals.lgd, 0)}{" "}
+          portfolio figure rather than trusting a raw estimate from a few hundred charged-off loans —
+          without that credibility weighting, Grade G's own recovery data alone would say 60%.
         </p>
       </Card>
 

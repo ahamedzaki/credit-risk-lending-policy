@@ -56,17 +56,27 @@ export function DataModel() {
               <tr>
                 <td>Decisions — income-band approval split, Overview fair-lending signal</td>
                 <td><span className="tag tag--real">REAL</span></td>
-                <td>Approval rates and adverse-impact ratios from the pipeline's fairness analysis (<code>fairness.json</code>). Income band and home-ownership both fail the 4/5ths rule (AIR 0.42 and 0.68); region passes (0.96).</td>
+                <td>Approval rates and adverse-impact ratios from the pipeline's fairness analysis (<code>fairness.json</code>). Income band and home-ownership both fail the 4/5ths rule (AIR 0.42 and 0.68, both statistically significant via a Bonferroni-corrected bootstrap CI); region passes (0.96).</td>
               </tr>
               <tr>
                 <td>Monitoring — "What drives the model"</td>
                 <td><span className="tag tag--real">REAL</span></td>
-                <td>Global permutation feature importance computed directly on the shipped estimator (<code>model.joblib</code>) against a 15,000-loan out-of-time test sample — a real attribution, not an assumption. Not a per-loan explanation.</td>
+                <td>Global permutation feature importance computed directly on the shipped estimator (<code>model.joblib</code>) against a 15,000-loan out-of-time test sample — a real attribution, not an assumption.</td>
+              </tr>
+              <tr>
+                <td>Monitoring — "Population stability (PSI)"</td>
+                <td><span className="tag tag--real">REAL</span></td>
+                <td>A genuine PSI comparison between the pipeline's own train (2012–14) and test (2015–16) cohorts on the model's score and top features — retrospective, not a live production feed (see Known limitations).</td>
+              </tr>
+              <tr>
+                <td>Monitoring — "Real per-loan sample"</td>
+                <td><span className="tag tag--real">REAL</span></td>
+                <td>12 real out-of-time test loans, explained by perturbing the actual trained model one feature at a time — a genuine per-loan sensitivity, not synthetic. Not an exact SHAP decomposition (see Known limitations).</td>
               </tr>
               <tr>
                 <td>Portfolio — loss given default by grade</td>
                 <td><span className="tag tag--real">REAL</span></td>
-                <td>Recovery-rate LGD, same method as the headline figure, segmented by grade instead of pooled — 44% (Grade A) to 60% (Grade G).</td>
+                <td>Recovery-rate LGD, credibility-weighted by grade (Buhlmann), 46.4% (Grade A) to 53.5% (Grade E) — thin grades (F, G) shrink toward the flat portfolio figure rather than trusting a small sample. This is what actually feeds Expected Loss now, not a supplementary side stat.</td>
               </tr>
               <tr>
                 <td>Borrower table &amp; risk-driver panel</td>
@@ -105,11 +115,11 @@ export function DataModel() {
               </tr>
               <tr>
                 <td>Live model monitoring</td>
-                <td>PSI and the monthly trend tiles are seeded synthetic series, not computed against scored production traffic — there is no production traffic. The one real time comparison is train-vs-test stability in Model risk.</td>
+                <td>The monthly trend tiles on Monitoring are still seeded synthetic series — there is no scored production traffic to plot month by month. What's real now is a retrospective PSI check between the pipeline's own train and test cohorts ("Population stability (PSI)" above) — a genuine population-stability computation, just not a live, continuously-updating one.</td>
               </tr>
               <tr>
                 <td>Per-loan reason codes</td>
-                <td>"What drives the model" (above) is a real global attribution. ECOA/Reg B adverse-action notices need a per-decision explainer (e.g. real SHAP values from the trained model) — not built.</td>
+                <td>"What drives the model" is a real global attribution; "Real per-loan sample" (above) is now a real per-loan sensitivity on the actual trained model for 12 sampled loans. Neither is a production ECOA/Reg B system: the per-loan version is marginal-contribution attribution (one feature perturbed at a time), not an exact Shapley-value decomposition, and it covers a small fixed sample, not every live decision.</td>
               </tr>
               <tr>
                 <td>Protected-class fair lending</td>

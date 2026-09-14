@@ -20,7 +20,14 @@ split:
   oot_cutoff: "2015-01-01"           # train: issue_d < cutoff ; test: issue_d >= cutoff (within mature window)
 
 model:
-  target_positive_statuses: ["Charged Off", "Default", "Late (120+ days)"]
+  # Audit finding (fixed): this used to list "Late (120+ days)" as a positive-label status,
+  # but that status is NOT terminal (sql/02_staging.sql: is_terminal = loan_status IN
+  # ('Fully Paid','Charged Off','Default')) — a loan still Late is still open, not yet
+  # resolved, so it's correctly excluded from modeling (censored), not labeled a default.
+  # These two keys are informational only and are NOT read by any SQL/Python at runtime —
+  # the authoritative label definition lives in sql/03_features_outcome.sql (default_flag).
+  # Keeping the values here consistent with that SQL rather than aspirational/unused.
+  target_positive_statuses: ["Charged Off", "Default"]
   target_negative_statuses: ["Fully Paid"]
   # Primary PD model. "hgb" = HistGradientBoosting (sklearn, no libomp needed).
   # Finding (with the expanded ~33-field bureau allowlist): logistic AUC ~0.680,
